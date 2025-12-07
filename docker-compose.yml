@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine  # Versão do Postgres
+    container_name: meu-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres       # Usuário (mude se necessário)
+      POSTGRES_PASSWORD: admin   # Senha (mude se necessário)
+      POSTGRES_DB: horafit     # Nome do banco de dados
+    ports:
+      - "5432:5432"              # Libera a porta para você acessar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Salva os dados para não perder
+
+volumes:
+  postgres_data:
