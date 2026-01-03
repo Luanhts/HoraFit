@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Package, LogOut } from 'lucide-react'
-import { Button } from '@/components/ui/button.tsx'
+import { Button } from '@/components/ui/button'
 import logo from '@/assets/HoraFitLogo.jpg'
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
@@ -46,11 +46,15 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
+            const active = isActive(item.path)
             return (
               <Link key={item.path} href={item.path}>
                 <Button
-                  variant={isActive(item.path) ? 'default' : 'ghost'}
-                  className="w-full justify-start gap-3"
+                  variant={ active ? 'default' : 'ghost'}
+                  className={`w-full justify-start gap-3 cursor-pointer ${active 
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+              : 'hover:bg-secondary hover:text-white'
+            }`}
                 >
                   <Icon className="h-5 w-5" />
                   {item.label}
