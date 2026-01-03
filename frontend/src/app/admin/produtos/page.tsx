@@ -10,14 +10,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const produtos = [
-  { id: 1, nome: "Smoothie Dragon Fruit", sku: "SMT-001", estoque: 45, preco: "R$ 18.90", status: "Ativo", img: "https://images.unsplash.com/photo-1553531384-cc64ac80f931?w=100&h=100&fit=crop" },
-  { id: 2, nome: "Açaí Bowl Proteico", sku: "ACB-002", estoque: 32, preco: "R$ 22.50", status: "Ativo", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=100&h=100&fit=crop" },
-  { id: 3, nome: "Shake de Chocolate Fit", sku: "SHK-003", estoque: 5, preco: "R$ 16.90", status: "Ativo", img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=100&h=100&fit=crop" },
-  { id: 4, nome: "Bowl de Frutas", sku: "BWL-004", estoque: 0, preco: "R$ 19.90", status: "Inativo", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&h=100&fit=crop" },
-];
+import { API_URL } from "@/lib/api";
+import { Produto } from "@/types/produto";
 
-export default function ProdutosPage() {
+async function getProdutos(): Promise<Produto[]> {
+  try {
+    const res = await fetch(`${API_URL}/products`, {
+      cache: 'no-store' // Para garantir que pegue dados novos do seu NestJS
+    });
+
+    if (!res.ok) throw new Error('Erro ao buscar dados');
+    
+    return res.json();
+  } catch (error) {
+    console.error("Erro na requisição:", error);
+    return []; // Retorna lista vazia se o backend estiver fora do ar
+  }
+}
+
+export default async function ProdutosPage() {
+  const produtos = await getProdutos();
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho com o Rosa da Marca */}
@@ -52,26 +65,33 @@ export default function ProdutosPage() {
               <TableRow key={produto.id}>
                 <TableCell>
                   <img 
-                    src={produto.img} 
-                    alt={produto.nome} 
+                    src={produto.imageUrl || "/placeholder-food.png"} // Ajustado para imageUrl
+                    alt={produto.name} 
                     className="h-12 w-12 rounded-lg object-cover border" 
                   />
                 </TableCell>
-                <TableCell className="font-medium">{produto.nome}</TableCell>
+                <TableCell className="font-medium">
+                  <div>
+                    {produto.name}
+                    <div className="text-[10px] text-muted-foreground">{produto.category.name}</div>
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{produto.sku}</TableCell>
                 <TableCell>
-                  <span className={produto.estoque <= 5 ? "text-orange-600 font-bold" : ""}>
-                    {produto.estoque}
+                  <span className={produto.stock <= 5 ? "text-orange-600 font-bold" : ""}>
+                    {produto.stock}
                   </span>
                 </TableCell>
-                <TableCell className="font-bold">{produto.preco}</TableCell>
+                <TableCell className="font-bold">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(produto.price))}
+                </TableCell>
                 <TableCell>
                   <Badge className={
-                    produto.status === "Ativo" 
+                    produto.active 
                     ? "bg-primary/20 text-primary hover:bg-primary/30" 
                     : "bg-secondary/20 text-secondary hover:bg-secondary/30"
                   }>
-                    {produto.status}
+                    {produto.active ? "Ativo" : "Inativo"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
