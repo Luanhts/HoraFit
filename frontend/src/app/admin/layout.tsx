@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Package, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
-import logo from '../../assets/HoraFitLogo.jpg'
+import logo from '@/assets/HoraFitLogo.jpg'
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
