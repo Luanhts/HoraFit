@@ -81,7 +81,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="container py-8">
+        <div className="container py-8 px-18">
           {children}
         </div>
       </main>

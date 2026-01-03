@@ -65,7 +65,7 @@ export default async function ProdutosPage() {
               <TableRow key={produto.id}>
                 <TableCell>
                   <img 
-                    src={produto.imageUrl || "/placeholder-food.png"} // Ajustado para imageUrl
+                    src={produto.imageUrl || '/placeholder-image.png'} 
                     alt={produto.name} 
                     className="h-12 w-12 rounded-lg object-cover border" 
                   />
