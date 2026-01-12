@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, type ProductFormData } from "@/schemas/product-schema";
+import { productSchema, type ProductFormData } from "@/";
 import { criarProdutoAction } from "@/actions/produto-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
