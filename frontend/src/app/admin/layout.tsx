@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Package, LogOut } from 'lucide-react'
+import { Package, LogOut, ShoppingBag, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import logo from '@/assets/HoraFitLogo.jpg'
 
@@ -11,7 +11,10 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
 
   const menuItems = [
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/produtos', icon: Package, label: 'Produtos' },
+    { path: '/admin/pedidos', icon: ShoppingBag, label: 'Pedidos' },
+
   ]
 
   const isActive = (path: string) => {
