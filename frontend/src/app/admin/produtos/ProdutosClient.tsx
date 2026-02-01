@@ -80,10 +80,10 @@ export default function ProdutosClient({ initialProdutos }: { initialProdutos: P
                  </TableCell>
                  <TableCell className="text-right">
                    <div className="flex justify-end gap-2">
-                     <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
+                     <Button variant="edit" size="icon" className="h-8 w-8 cursor-pointer">
                        <Edit className="h-4 w-4 text-muted-foreground" />
                      </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-destructive">
+                     <Button variant="remove" size="icon" className="h-8 w-8 cursor-pointer text-destructive">
                        <Trash2 className="h-4 w-4" />
                      </Button>
                    </div>
