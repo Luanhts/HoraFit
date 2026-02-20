@@ -150,7 +150,7 @@ export default function ModalNovoProduto({ open, onClose }: Props) {
             Cancelar
           </Button>
           <Button 
-            className="w-full py-6 text-base font-medium bg-primary hover:bg-primary cursor-pointer"
+            className="w-full py-6 text-base font-medium bg-primary cursor-pointer"
           >
             Adicionar Produto
           </Button>

@@ -68,7 +68,7 @@ export default function ProdutosClient({ initialProdutos }: { initialProdutos: P
           <h1 className="text-3xl font-bold tracking-tight">Meus Produtos</h1>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="bg-primary text-white gap-2 cursor-pointer">
-          <Plus className="h-4 w-4" /> Adicionar Novo Produto
+          <Plus className="h-4 w-4"/> Adicionar Novo Produto
         </Button>
       </div>
 
