@@ -59,7 +59,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
               : 'hover:bg-secondary hover:text-white'
             }`}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5"/>
                   {item.label}
                 </Button>
               </Link>
@@ -70,7 +70,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-4 border-t">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-destructive"
+            className="w-full justify-start gap-3 text-destructive cursor-pointer"
             onClick={() => {
               // implementar logout
               console.log('Logout')
