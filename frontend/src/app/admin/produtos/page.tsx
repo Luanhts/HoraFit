@@ -1,49 +1,43 @@
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
 import { API_URL } from "@/lib/api";
-import { Produto } from "@/types/produto";
-import { ca } from "zod/locales";
-import ModalNovoProduto from "@/components/admin/produtos/ModalNovoProduto";
+import { Category, Produto } from "@/types/produto";
 import ProdutosClient from "./ProdutosClient";
+
+// Ambas as funções rodam no servidor (Server Component).
+// As requisições são paralelas com Promise.all para reduzir o tempo de carregamento.
 
 async function getProdutos(): Promise<Produto[]> {
   try {
     const res = await fetch(`${API_URL}/products`, {
-      cache: 'no-store' // Para garantir que pegue dados novos do seu NestJS
+      cache: "no-store",
     });
-
-    if (!res.ok) throw new Error('Erro ao buscar dados');
-    
+    if (!res.ok) throw new Error("Erro ao buscar produtos");
     return res.json();
   } catch (error) {
-    console.error("Erro na requisição:", error);
-    return []; // Retorna lista vazia se o backend estiver fora do ar
+    console.error("Erro ao buscar produtos:", error);
+    return [];
   }
 }
 
-async function createProducts() {
+async function getCategories(): Promise<Category[]> {
   try {
-    const res = await fetch(`${API_URL}/products/create-mock-products`, {
-      method: 'POST',
+    const res = await fetch(`${API_URL}/categories`, {
+      // Categorias mudam raramente — pode usar cache padrão ou revalidar a cada hora
+      next: { revalidate: 3600 },
     });
-  
+    if (!res.ok) throw new Error("Erro ao buscar categorias");
     return res.json();
   } catch (error) {
-    console.error("Erro na requisição:", error);
+    console.error("Erro ao buscar categorias:", error);
+    return [];
   }
 }
-export default async function ProdutosPage() {
-  const produtos = await getProdutos();
 
-      return <ProdutosClient initialProdutos={produtos} />;
+export default async function ProdutosPage() {
+  // Requisições em paralelo: não esperamos produtos para então buscar categorias
+  const [produtos, categories] = await Promise.all([
+    getProdutos(),
+    getCategories(),
+  ]);
+
+  return <ProdutosClient initialProdutos={produtos} categories={categories} />;
 }

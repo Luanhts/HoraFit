@@ -1,12 +1,10 @@
 "use client";
 
-type Props = {
-  formId: string; // Para conectar com o botão do pai
-  onSubmit: (data: Produto) => void; // O pai decide o que fazer com os dados
-  initialData?: Produto; // Opcional: Só existe na edição
-}
-
-import { SubmitHandler, useForm } from "react-hook-form";
+// Zod define as regras de validação. zodResolver conecta essas regras ao
+// react-hook-form para que os erros apareçam automaticamente nos campos.
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, Controller } from "react-hook-form";
 
 import { Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,113 +18,191 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Produto } from "@/types/produto";
+import { Category, Produto } from "@/types/produto";
 
-export default function FormProdutos({ formId, onSubmit, initialData }: Props) {
+// Schema de validação centralizado neste arquivo.
+// Qualquer regra de negócio do formulário fica aqui — fácil de manter.
+export const produtoSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  sku: z.string().min(1, "SKU é obrigatório"),
+  price: z.coerce
+    .number({ invalid_type_error: "Insira um preço válido" })
+    .positive("Preço deve ser maior que zero"),
+  stock: z.coerce
+    .number({ invalid_type_error: "Insira uma quantidade válida" })
+    .int("Estoque deve ser um número inteiro")
+    .min(0, "Estoque não pode ser negativo"),
+  // coerce.number() converte a string do Select para número automaticamente
+  categoryId: z.coerce
+    .number({ invalid_type_error: "Selecione uma categoria" })
+    .int()
+    .min(1, "Selecione uma categoria"),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+  active: z.boolean().default(true),
+});
 
-    const { register, handleSubmit, reset } = useForm<Produto>({
-    defaultValues: initialData || { // Valores padrão se for criação
-      name: "",
-      sku: "",
-      price: 0,
-      stock: 0
-    }
+export type ProdutoSchema = z.infer<typeof produtoSchema>;
+
+type Props = {
+  formId: string;
+  // O pai decide o que fazer com os dados validados (criar ou editar)
+  onSubmit: (data: ProdutoSchema) => void;
+  // Só existe na edição — pré-popula o formulário com os dados atuais
+  initialData?: Produto;
+  categories: Category[];
+};
+
+export default function FormProdutos({
+  formId,
+  onSubmit,
+  initialData,
+  categories,
+}: Props) {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<ProdutoSchema>({
+    resolver: zodResolver(produtoSchema),
+    defaultValues: initialData
+      ? {
+          name: initialData.name,
+          sku: initialData.sku,
+          price: Number(initialData.price), // Prisma retorna Decimal como string
+          stock: initialData.stock,
+          categoryId: initialData.categoryId,
+          description: initialData.description ?? "",
+          imageUrl: initialData.imageUrl ?? "",
+          active: initialData.active,
+        }
+      : {
+          name: "",
+          sku: "",
+          price: 0,
+          stock: 0,
+          description: "",
+          imageUrl: "",
+          active: true,
+        },
   });
 
   return (
-        <form id={formId} onSubmit={handleSubmit(onSubmit)} className="flex-1 p-6 space-y-6">
-          
-          {/* Imagem */}
-          <div className="space-y-2">
-            <Label>Imagem do Produto</Label>
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer">
-              <Upload className="h-8 w-8 mb-2 text-gray-400" />
-              <span className="text-sm">Arraste uma imagem ou cole a URL</span>
-            </div>
-            <Input {...register('imageUrl')} placeholder="URL da imagem do produto" />
-          </div>
+    <form
+      id={formId}
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex-1 space-y-6"
+    >
+      {/* Imagem */}
+      <div className="space-y-2">
+        <Label>Imagem do Produto</Label>
+        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer">
+          <Upload className="h-8 w-8 mb-2 text-gray-400" />
+          <span className="text-sm">Cole a URL da imagem abaixo</span>
+        </div>
+        <Input {...register("imageUrl")} placeholder="https://exemplo.com/imagem.jpg" />
+      </div>
 
-          {/* Nome e SKU */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome do Produto *</Label>
-              <Input {...register('name')} placeholder="Ex: Açaí Bowl Proteico" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input {...register('sku')} placeholder="Ex: ACB-001" />
-            </div>
-          </div>
+      {/* Nome e SKU */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nome do Produto *</Label>
+          <Input id="name" {...register("name")} placeholder="Ex: Shake Herbalife Baunilha" />
+          {errors.name && (
+            <p className="text-xs text-destructive">{errors.name.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="sku">SKU *</Label>
+          <Input id="sku" {...register("sku")} placeholder="Ex: HRB-001" />
+          {errors.sku && (
+            <p className="text-xs text-destructive">{errors.sku.message}</p>
+          )}
+        </div>
+      </div>
 
-          {/* Preço e Estoque */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$) *</Label>
-              <Input {...register('price')} type="number" placeholder="0.00" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">Estoque *</Label>
-              <Input {...register('stock')} type="number" placeholder="0" />
-            </div>
-          </div>
+      {/* Preço e Estoque */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="price">Preço (R$) *</Label>
+          <Input id="price" {...register("price")} type="number" step="0.01" placeholder="0.00" />
+          {errors.price && (
+            <p className="text-xs text-destructive">{errors.price.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="stock">Estoque *</Label>
+          <Input id="stock" {...register("stock")} type="number" placeholder="0" />
+          {errors.stock && (
+            <p className="text-xs text-destructive">{errors.stock.message}</p>
+          )}
+        </div>
+      </div>
 
-          {/* Categoria 
-          <div className="space-y-2">
-            <Label>Categoria</Label>
-            <Select>
+      {/* Categoria — usa Controller porque o Select do Radix UI não é um input HTML nativo,
+          então register() não consegue capturar seu valor automaticamente */}
+      <div className="space-y-2">
+        <Label>Categoria *</Label>
+        <Controller
+          name="categoryId"
+          control={control}
+          render={({ field }) => (
+            <Select
+              value={field.value ? String(field.value) : ""}
+              onValueChange={(val) => field.onChange(Number(val))}
+            >
               <SelectTrigger className="cursor-pointer">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem className="cursor-pointer" value="bowl">Bowls</SelectItem>
-                <SelectItem className="cursor-pointer" value="bebida">Bebidas</SelectItem>
-                <SelectItem className="cursor-pointer" value="sobremesa">Sobremesas</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem
+                    key={cat.id}
+                    value={String(cat.id)}
+                    className="cursor-pointer"
+                  >
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-          </div>*/}
+          )}
+        />
+        {errors.categoryId && (
+          <p className="text-xs text-destructive">{errors.categoryId.message}</p>
+        )}
+      </div>
 
-          {/* Descrição */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea 
-              {...register('description')} 
-              placeholder="Descrição detalhada do produto..." 
-              className="resize-none h-24" 
+      {/* Descrição */}
+      <div className="space-y-2">
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          {...register("description")}
+          placeholder="Descrição detalhada do produto..."
+          className="resize-none h-24"
+        />
+      </div>
+
+      {/* Produto Ativo — também usa Controller pelo mesmo motivo do Select */}
+      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-100">
+        <div className="space-y-0.5">
+          <Label className="text-base font-semibold">Produto Ativo</Label>
+          <p className="text-sm text-gray-500">O produto ficará visível na loja</p>
+        </div>
+        <Controller
+          name="active"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              className="cursor-pointer"
             />
-          </div>
-
-          {/* Informação Nutricional }
-          <div className="space-y-3">
-            <h3 className="font-semibold text-gray-800">Informação Nutricional</h3>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <span className="text-xs text-gray-500 block mb-1">Calorias</span>
-                <Input  placeholder="kcal" className="pr-2" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs text-gray-500 block mb-1">Proteínas</span>
-                <Input placeholder="g" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs text-gray-500 block mb-1">Carboidratos</span>
-                <Input placeholder="g" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs text-gray-500 block mb-1">Gorduras</span>
-                <Input placeholder="g" />
-              </div>
-            </div>
-          </div>*/}
-
-          {/* Produto Ativo (Último item do scroll) */}
-          <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-100">
-            <div className="space-y-0.5">
-              <Label className="text-base font-semibold">Produto Ativo</Label>
-              <p className="text-sm text-gray-500">O produto ficará visível na loja</p>
-            </div>
-            <Switch {...register('active')} className="cursor-pointer" />
-          </div>
-
-        </form> 
+          )}
+        />
+      </div>
+    </form>
   );
 }
