@@ -7,7 +7,7 @@ import { criarProdutoAction } from "@/actions/produto-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { toast } from "sonner"; // Opcional: para feedback visual
+import { toast } from "sonner"; 
 
 export default function NovoProdutoPage() {
   const form = useForm<ProductFormData>({
