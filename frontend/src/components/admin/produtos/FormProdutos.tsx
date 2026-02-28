@@ -1,7 +1,5 @@
 "use client";
 
-// Zod define as regras de validação. zodResolver conecta essas regras ao
-// react-hook-form para que os erros apareçam automaticamente nos campos.
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
@@ -20,8 +18,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Category, Produto } from "@/types/produto";
 
-// Schema de validação centralizado neste arquivo.
-// Qualquer regra de negócio do formulário fica aqui — fácil de manter.
 export const produtoSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   sku: z.string().min(1, "SKU é obrigatório"),

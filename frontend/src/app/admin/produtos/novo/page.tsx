@@ -2,20 +2,21 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, type ProductFormData } from "@/";
+import { produtoSchema } from "@/components/admin/produtos/FormProdutos";
 import { criarProdutoAction } from "@/actions/produto-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner"; 
+import { ProdutoFormData } from "@/types/produto";
 
 export default function NovoProdutoPage() {
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+  const form = useForm<ProdutoFormData>({
+    resolver: zodResolver(produtoSchema),
     defaultValues: { name: "", description: "", price: 0, sku: "", stock: 0, categoryId: 1, active: true },
   });
 
-  async function onSubmit(values: ProductFormData) {
+  async function onSubmit(values: ProdutoFormData) {
     const result = await criarProdutoAction(values);
     if (result?.error) {
       toast.error(result.error);
@@ -25,7 +26,7 @@ export default function NovoProdutoPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-10">
       <div>
-        <h1 className="text-3xl font-bold">Novo Produto</h1>
+        <h1 className="text-3xl font-bold">Novo Produ</h1>
         <p className="text-muted-foreground">Preencha os dados abaixo para o catálogo da Hora Fit.</p>
       </div>
 
