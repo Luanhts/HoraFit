@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 
 import { Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -21,18 +22,36 @@ import { Category, Produto } from "@/types/produto";
 export const produtoSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   sku: z.string().min(1, "SKU é obrigatório"),
-  price: z.coerce
-    .number({ invalid_type_error: "Insira um preço válido" })
-    .positive("Preço deve ser maior que zero"),
-  stock: z.coerce
-    .number({ invalid_type_error: "Insira uma quantidade válida" })
-    .int("Estoque deve ser um número inteiro")
-    .min(0, "Estoque não pode ser negativo"),
+  price: z.preprocess(
+    (val) => {
+      if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
+      return val;
+    },
+    z.number()
+      .refine((v) => !Number.isNaN(v), { message: "Insira um preço válido" })
+      .positive("Preço deve ser maior que zero")
+  ),
+  stock: z.preprocess(
+    (val) => {
+      if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
+      return val;
+    },
+    z.number()
+      .refine((v) => !Number.isNaN(v), { message: "Insira uma quantidade válida" })
+      .int("Estoque deve ser um número inteiro")
+      .min(0, "Estoque não pode ser negativo")
+  ),
   // coerce.number() converte a string do Select para número automaticamente
-  categoryId: z.coerce
-    .number({ invalid_type_error: "Selecione uma categoria" })
-    .int()
-    .min(1, "Selecione uma categoria"),
+  categoryId: z.preprocess(
+    (val) => {
+      if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
+      return val;
+    },
+    z.number()
+      .refine((v) => !Number.isNaN(v), { message: "Selecione uma categoria" })
+      .int()
+      .min(1, "Selecione uma categoria")
+  ),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
   active: z.boolean().default(true),
@@ -61,7 +80,7 @@ export default function FormProdutos({
     control,
     formState: { errors },
   } = useForm<ProdutoSchema>({
-    resolver: zodResolver(produtoSchema),
+    resolver: zodResolver(produtoSchema) as Resolver<ProdutoSchema>,
     defaultValues: initialData
       ? {
           name: initialData.name,

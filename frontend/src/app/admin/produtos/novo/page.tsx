@@ -1,22 +1,23 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { produtoSchema } from "@/components/admin/produtos/FormProdutos";
+import { produtoSchema, type ProdutoSchema } from "@/components/admin/produtos/FormProdutos";
 import { criarProdutoAction } from "@/actions/produto-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner"; 
-import { ProdutoFormData } from "@/types/produto";
 
 export default function NovoProdutoPage() {
-  const form = useForm<ProdutoFormData>({
-    resolver: zodResolver(produtoSchema),
+  const rhfResolver = zodResolver(produtoSchema) as Resolver<ProdutoSchema>;
+  const form = useForm<ProdutoSchema>({
+    resolver: rhfResolver,
     defaultValues: { name: "", description: "", price: 0, sku: "", stock: 0, categoryId: 1, active: true },
   });
 
-  async function onSubmit(values: ProdutoFormData) {
+  async function onSubmit(values: ProdutoSchema) {
     const result = await criarProdutoAction(values);
     if (result?.error) {
       toast.error(result.error);
@@ -38,7 +39,7 @@ export default function NovoProdutoPage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nome do Produto</FormLabel>
-                <FormControl><Input placeholder="Ex: Whey Protein" {...field} /></FormControl>
+                <FormControl><Input placeholder="Ex: Whey Protein" {...(field as any)} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -51,7 +52,7 @@ export default function NovoProdutoPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Preço (R$)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                  <FormControl><Input type="number" step="0.01" {...(field as any)} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -62,7 +63,7 @@ export default function NovoProdutoPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Estoque Inicial</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormControl><Input type="number" {...(field as any)} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -75,7 +76,7 @@ export default function NovoProdutoPage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>SKU</FormLabel>
-                <FormControl><Input placeholder="WHEY-001" {...field} /></FormControl>
+                <FormControl><Input placeholder="WHEY-001" {...(field as any)} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
