@@ -10,4 +10,12 @@ export class CategoriesService {
       orderBy: { name: 'asc' },
     });
   }
+
+  async create(createCategoryDto: { name: string }) {
+    return await this.prisma.category.create({
+      data: {
+        name: createCategoryDto.name,
+      },
+    });
+  }
 }
