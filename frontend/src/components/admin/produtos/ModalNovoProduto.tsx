@@ -15,7 +15,12 @@ type Props = {
   categories: Category[];
 };
 
-export default function ModalNovoProduto({ open, onClose, onSuccess, categories }: Props) {
+export default function ModalNovoProduto({
+  open,
+  onClose,
+  onSuccess,
+  categories,
+}: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -54,10 +59,11 @@ export default function ModalNovoProduto({ open, onClose, onSuccess, categories 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-
         {/* Cabeçalho */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Adicionar Novo Produto</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Adicionar Novo Produto
+          </h2>
           <Button
             onClick={onClose}
             variant="ghost"
@@ -105,7 +111,6 @@ export default function ModalNovoProduto({ open, onClose, onSuccess, categories 
             {isLoading ? "Salvando..." : "Adicionar Produto"}
           </Button>
         </div>
-
       </div>
     </div>
   );

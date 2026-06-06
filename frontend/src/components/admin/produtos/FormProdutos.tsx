@@ -27,19 +27,23 @@ export const produtoSchema = z.object({
       if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
       return val;
     },
-    z.number()
+    z
+      .number()
       .refine((v) => !Number.isNaN(v), { message: "Insira um preço válido" })
-      .positive("Preço deve ser maior que zero")
+      .positive("Preço deve ser maior que zero"),
   ),
   stock: z.preprocess(
     (val) => {
       if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
       return val;
     },
-    z.number()
-      .refine((v) => !Number.isNaN(v), { message: "Insira uma quantidade válida" })
+    z
+      .number()
+      .refine((v) => !Number.isNaN(v), {
+        message: "Insira uma quantidade válida",
+      })
       .int("Estoque deve ser um número inteiro")
-      .min(0, "Estoque não pode ser negativo")
+      .min(0, "Estoque não pode ser negativo"),
   ),
   // coerce.number() converte a string do Select para número automaticamente
   categoryId: z.preprocess(
@@ -47,10 +51,11 @@ export const produtoSchema = z.object({
       if (typeof val === "string") return val.trim() === "" ? NaN : Number(val);
       return val;
     },
-    z.number()
+    z
+      .number()
       .refine((v) => !Number.isNaN(v), { message: "Selecione uma categoria" })
       .int()
-      .min(1, "Selecione uma categoria")
+      .min(1, "Selecione uma categoria"),
   ),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
@@ -87,7 +92,7 @@ export default function FormProdutos({
           sku: initialData.sku,
           price: Number(initialData.price), // Prisma retorna Decimal como string
           stock: initialData.stock,
-          categoryId: initialData.categoryId,
+          categoryId: initialData.categoryId ?? undefined,
           description: initialData.description ?? "",
           imageUrl: initialData.imageUrl ?? "",
           active: initialData.active,
@@ -116,14 +121,21 @@ export default function FormProdutos({
           <Upload className="h-8 w-8 mb-2 text-gray-400" />
           <span className="text-sm">Cole a URL da imagem abaixo</span>
         </div>
-        <Input {...register("imageUrl")} placeholder="https://exemplo.com/imagem.jpg" />
+        <Input
+          {...register("imageUrl")}
+          placeholder="https://exemplo.com/imagem.jpg"
+        />
       </div>
 
       {/* Nome e SKU */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Nome do Produto *</Label>
-          <Input id="name" {...register("name")} placeholder="Ex: Shake Herbalife Baunilha" />
+          <Input
+            id="name"
+            {...register("name")}
+            placeholder="Ex: Shake Herbalife Baunilha"
+          />
           {errors.name && (
             <p className="text-xs text-destructive">{errors.name.message}</p>
           )}
@@ -141,14 +153,25 @@ export default function FormProdutos({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">Preço (R$) *</Label>
-          <Input id="price" {...register("price")} type="number" step="0.01" placeholder="0.00" />
+          <Input
+            id="price"
+            {...register("price")}
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+          />
           {errors.price && (
             <p className="text-xs text-destructive">{errors.price.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="stock">Estoque *</Label>
-          <Input id="stock" {...register("stock")} type="number" placeholder="0" />
+          <Input
+            id="stock"
+            {...register("stock")}
+            type="number"
+            placeholder="0"
+          />
           {errors.stock && (
             <p className="text-xs text-destructive">{errors.stock.message}</p>
           )}
@@ -171,21 +194,29 @@ export default function FormProdutos({
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem
-                    key={cat.id}
-                    value={String(cat.id)}
-                    className="cursor-pointer"
-                  >
-                    {cat.name}
-                  </SelectItem>
-                ))}
+                {categories && categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <SelectItem
+                      key={cat.id}
+                      value={String(cat.id)}
+                      className="cursor-pointer"
+                    >
+                      {cat.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    Nenhuma categoria encontrada
+                  </div>
+                )}
               </SelectContent>
             </Select>
           )}
         />
         {errors.categoryId && (
-          <p className="text-xs text-destructive">{errors.categoryId.message}</p>
+          <p className="text-xs text-destructive">
+            {errors.categoryId.message}
+          </p>
         )}
       </div>
 
@@ -204,7 +235,9 @@ export default function FormProdutos({
       <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-100">
         <div className="space-y-0.5">
           <Label className="text-base font-semibold">Produto Ativo</Label>
-          <p className="text-sm text-gray-500">O produto ficará visível na loja</p>
+          <p className="text-sm text-gray-500">
+            O produto ficará visível na loja
+          </p>
         </div>
         <Controller
           name="active"
