@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/api";
+import DialogEditProducts from "@/components/admin/produtos/DialogEditProducts";
+import { set } from "zod";
 
 type Props = {
   initialProdutos: Produto[];
@@ -31,6 +33,7 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Adiciona o produto criado no topo da lista sem precisar recarregar a página
@@ -52,6 +55,7 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
 
   function handleCloseEdit() {
     setIsEditModalOpen(false);
+    setIsEditDialogOpen(false);
     setSelectedProduto(null);
   }
 
