@@ -1,12 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
-import ModalNovoProduto from "@/components/admin/produtos/ModalNovoProduto";
-import ModalEditProduto from "@/components/admin/produtos/ModalEditProduto";
 import DialogRemoverProduto from "@/components/admin/produtos/DialogRemoverProduto";
+import ModalEditProduto from "@/components/admin/produtos/ModalEditProduto";
+import ModalNovoProduto from "@/components/admin/produtos/ModalNovoProduto";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { Category, Produto } from "@/types/produto";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -15,10 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/api";
-import DialogEditProducts from "@/components/admin/produtos/DialogEditProducts";
-import { set } from "zod";
+import { Category, Produto } from "@/types/produto";
+import { Edit, Plus, Search, Trash2, X } from "lucide-react";
+import { useState } from "react";
 
 type Props = {
   initialProdutos: Produto[];
@@ -36,6 +42,51 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
+  //Estados dos Filtros
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [categoryFilter, setCategoryFilter] = useState("todas");
+  const [stockFilter, setStockFilter] = useState("todos");
+
+  // Função para limpar filtros
+  function handleClearFilters() {
+    setSearch("");
+    setStatusFilter("todos");
+    setCategoryFilter("todas");
+    setStockFilter("todos");
+  }
+
+  // --- LÓGICA DE FILTRAGEM ---
+  const produtosFiltrados = produtos.filter((produto) => {
+    // 1. Filtro por Nome ou SKU
+    const matchesSearch =
+      produto.name.toLowerCase().includes(search.toLowerCase()) ||
+      produto.sku.toLowerCase().includes(search.toLowerCase());
+
+    // 2. Filtro por Status
+    const matchesStatus =
+      statusFilter === "todos" ||
+      (statusFilter === "ativo" && produto.active) ||
+      (statusFilter === "inativo" && !produto.active);
+
+    // 3. Filtro por Categoria
+    const matchesCategory =
+      categoryFilter === "todas" ||
+      String(produto.category.id) === categoryFilter;
+
+    // 4. Filtro por Estoque
+    let matchesStock = true;
+    if (stockFilter === "baixo") {
+      matchesStock = produto.stock <= 5;
+    } else if (stockFilter === "disponivel") {
+      matchesStock = produto.stock > 0;
+    } else if (stockFilter === "esgotado") {
+      matchesStock = produto.stock === 0;
+    }
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesStock;
+  });
+
   // Adiciona o produto criado no topo da lista sem precisar recarregar a página
   function handleCreateSuccess(novoProduto: Produto) {
     setProdutos((prev) => [novoProduto, ...prev]);
@@ -44,7 +95,7 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
   // Substitui o produto editado na lista pelo dado mais recente do servidor
   function handleUpdateSuccess(produtoAtualizado: Produto) {
     setProdutos((prev) =>
-      prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p))
+      prev.map((p) => (p.id === produtoAtualizado.id ? produtoAtualizado : p)),
     );
   }
 
@@ -109,6 +160,95 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
         </Button>
       </div>
 
+      {/* ================= BARRA DE FILTROS (ESTILO IGUAL À IMAGEM) ================= */}
+      <div className="rounded-xl border bg-card p-5 shadow-sm flex flex-wrap items-end gap-4">
+        {/* Buscar Produto */}
+        <div className="space-y-2 flex-1 min-w-[200px]">
+          <label className="text-xs font-medium text-muted-foreground">
+            Buscar produto
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Digite o nome ou SKU..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 bg-background h-10 rounded-lg"
+            />
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-2 w-[180px]">
+          <label className="text-xs font-medium text-muted-foreground">
+            Status
+          </label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="bg-background h-10 rounded-lg">
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="ativo">Ativo</SelectItem>
+              <SelectItem value="inativo">Inativo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Categoria */}
+        <div className="space-y-2 w-[180px]">
+          <label className="text-xs font-medium text-muted-foreground">
+            Categoria
+          </label>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="bg-background h-10 rounded-lg">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Estoque */}
+        <div className="space-y-2 w-[180px]">
+          <label className="text-xs font-medium text-muted-foreground">
+            Estoque
+          </label>
+          <Select value={stockFilter} onValueChange={setStockFilter}>
+            <SelectTrigger className="bg-background h-10 rounded-lg">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="disponivel">Disponível</SelectItem>
+              <SelectItem value="baixo">Baixo Estoque (≤ 5)</SelectItem>
+              <SelectItem value="esgotado">Esgotado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Botão Limpar */}
+        {(search ||
+          statusFilter !== "todos" ||
+          categoryFilter !== "todas" ||
+          stockFilter !== "todos") && (
+          <Button
+            variant="ghost"
+            onClick={handleClearFilters}
+            className="h-10 text-muted-foreground hover:text-foreground gap-1 px-3 cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+            Limpar
+          </Button>
+        )}
+      </div>
+
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-6">Todos os Produtos</h2>
 
@@ -142,9 +282,15 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{produto.sku}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {produto.sku}
+                </TableCell>
                 <TableCell>
-                  <span className={produto.stock <= 5 ? "text-orange-600 font-bold" : ""}>
+                  <span
+                    className={
+                      produto.stock <= 5 ? "text-orange-600 font-bold" : ""
+                    }
+                  >
                     {produto.stock}
                   </span>
                 </TableCell>
