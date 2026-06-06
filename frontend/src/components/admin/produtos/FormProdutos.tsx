@@ -117,10 +117,28 @@ export default function FormProdutos({
       {/* Imagem */}
       <div className="space-y-2">
         <Label>Imagem do Produto</Label>
-        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer">
+        <label
+          htmlFor="file-upload"
+          className="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                console.log("Arquivo selecionado para upload:", file);
+                // TODO: Sua lógica para enviar o arquivo para o backend/S3
+                // e depois atualizar o campo "imageUrl" do react-hook-form
+              }
+            }}
+          />
+
           <Upload className="h-8 w-8 mb-2 text-gray-400" />
           <span className="text-sm">Cole a URL da imagem abaixo</span>
-        </div>
+        </label>
         <Input
           {...register("imageUrl")}
           placeholder="https://exemplo.com/imagem.jpg"
