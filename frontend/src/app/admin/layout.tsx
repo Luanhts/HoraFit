@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Package, LogOut } from 'lucide-react'
+import { Package, LogOut, ShoppingBag, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import logo from '@/assets/HoraFitLogo.jpg'
 
@@ -11,7 +11,10 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
 
   const menuItems = [
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/produtos', icon: Package, label: 'Produtos' },
+    { path: '/admin/pedidos', icon: ShoppingBag, label: 'Pedidos' },
+
   ]
 
   const isActive = (path: string) => {
@@ -56,7 +59,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
               : 'hover:bg-secondary hover:text-white'
             }`}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5"/>
                   {item.label}
                 </Button>
               </Link>
@@ -67,7 +70,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-4 border-t">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-destructive"
+            className="w-full justify-start gap-3 text-destructive cursor-pointer"
             onClick={() => {
               // implementar logout
               console.log('Logout')
@@ -81,7 +84,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="container py-8">
+        <div className="container py-8 px-18">
           {children}
         </div>
       </main>
