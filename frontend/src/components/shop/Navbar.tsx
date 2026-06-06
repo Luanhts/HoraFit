@@ -9,7 +9,7 @@ export default function Navbar() {
   const cartItemsCount = 3;
 
   return (
-    <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
+    <header className="w-full bg-white/80 backdrop-blur-md border-b border-gray-100/80 sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-6xl h-20 flex items-center justify-between">
         {/* LOGO (Lado Esquerdo) */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -25,9 +25,9 @@ export default function Navbar() {
           </div>
           {/* Texto do Logo Estilizado com cores idênticas */}
           <span className="text-xl font-extrabold tracking-tight">
-            <span className="text-[#db2777]">A </span>
-            <span className="text-gray-400">Hora </span>
-            <span className="text-[#06b6d4]">Fit</span>
+            <span className="font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              A Hora Fit
+            </span>
           </span>
         </Link>
 
@@ -64,7 +64,7 @@ export default function Navbar() {
           {/* Ícone de Perfil/Usuário */}
           <Link
             href="/perfil"
-            className="text-gray-700 hover:text-[#db2777] transition-colors p-1"
+            className="text-gray-700 hover:text-primary transition-colors p-1"
           >
             <User className="h-5 w-5 stroke-[2]" />
           </Link>
@@ -72,11 +72,11 @@ export default function Navbar() {
           {/* Ícone do Carrinho com Badge do Contador */}
           <Link
             href="/carrinho"
-            className="relative text-gray-700 hover:text-[#db2777] transition-colors p-1"
+            className="relative text-gray-700 hover:text-primary transition-colors p-1"
           >
             <ShoppingCart className="h-5 w-5 stroke-[2]" />
             {cartItemsCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-[#d946ef] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-fade-in shadow-sm">
+              <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-fade-in shadow-sm">
                 {cartItemsCount}
               </span>
             )}

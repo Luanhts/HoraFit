@@ -1,3 +1,4 @@
+import Footer from "@/components/shop/Footer";
 import Navbar from "@/components/shop/Navbar";
 
 export default function ShopLayout({
@@ -10,6 +11,8 @@ export default function ShopLayout({
       {/* A Toolbar fica fixa no topo de todas as páginas da loja */}
       <Navbar />
       <div className="flex-1">{children}</div>
+
+      <Footer />
     </div>
   );
 }

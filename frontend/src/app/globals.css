@@ -78,7 +78,7 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
   /* ROSA da logo */
-  --primary: oklch(0.69 0.198 333.5); 
+  --primary: oklab(68.133% 0.16743 -0.01649); 
   --primary-foreground: oklch(0.98 0.01 333.5);
 
   /* CIANO/VERDE ÁGUA da logo */
