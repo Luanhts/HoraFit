@@ -113,7 +113,7 @@ export default function ModalEditProduto({
         {/* Rodapé */}
         <div className="p-6 border-t bg-gray-50 rounded-b-xl grid grid-cols-2 gap-4">
           <Button
-            variant="cancelBtn"
+            variant="secondaryBtn"
             onClick={onClose}
             disabled={isLoading}
             className="w-full py-6 text-base font-medium cursor-pointer"

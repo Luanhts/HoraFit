@@ -20,7 +20,7 @@ export default function DialogRemoverProduto({ open, onClose, productName, onCon
             Esta ação não pode ser desfeita.
             </p>
             <div className="mt-2 flex gap-2 justify-end">
-          <Button onClick={onClose} aria-label="Cancelar" variant="cancelBtn" className="cursor-pointer">Cancelar</Button>
+          <Button onClick={onClose} aria-label="Cancelar" variant="secondaryBtn" className="cursor-pointer">Cancelar</Button>
           <Button onClick={() => (onConfirm ? onConfirm() : onClose())} aria-label="Remover" variant="removeBtn" className="cursor-pointer">Remover</Button>
             </div>
         </div>
