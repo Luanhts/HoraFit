@@ -1,5 +1,6 @@
 import Footer from "@/components/shop/Footer";
 import Navbar from "@/components/shop/Navbar";
+import "../globals.css";
 
 export default function ShopLayout({
   children,

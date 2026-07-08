@@ -51,14 +51,8 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
   --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
@@ -77,20 +71,16 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
-  /* ROSA da logo */
-  --primary: oklab(68.133% 0.16743 -0.01649); 
+  /* ROSA da logo (Corrigido para oklch padrão) */
+  --primary: oklch(0.68 0.17 333.5); 
   --primary-foreground: oklch(0.98 0.01 333.5);
 
-  /* CIANO/VERDE ÁGUA da logo */
-  --secondary: oklch(0.72 0.13 194.8);
-  --secondary-foreground: oklch(0.20 0.04 194.8);
-
-  /* CIANO: Usado para o estado de HOVER */
+  /* CIANO: Usado para o estado de HOVER e Secondary */
   --secondary: oklch(0.75 0.15 190.0);
   --secondary-foreground: oklch(0.99 0.01 190.0);
 
-  /* Accent: Geralmente usado pelo Shadcn para hovers e seleções leves */
-  --accent: oklch(0.75 0.15 190.0 / 0.15); /* Ciano com transparência */
+  /* Accent: Usado pelo Shadcn para hovers e seleções leves */
+  --accent: oklch(0.75 0.15 190.0 / 0.15); 
   --accent-foreground: oklch(0.75 0.15 190.0);
 }
 
@@ -101,13 +91,10 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
   --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -129,13 +116,15 @@
 
   --primary: oklch(0.75 0.15 333.5);
   --secondary: oklch(0.78 0.12 194.8);
+  --accent: oklch(0.279 0.041 260.031);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* No Tailwind v4, seletores globais puros funcionam melhor sem herança direta de @layer base com utilitários dinâmicos */
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
 }
