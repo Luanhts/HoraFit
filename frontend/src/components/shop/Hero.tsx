@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-import img from "@/assets/photo-coca.avif"; // Imagem de exemplo, substitua pelo caminho correto
+import img from "@/assets/photo-coca.jpg"; // Imagem de exemplo, substitua pelo caminho correto
 
 export default function Hero() {
   return (
