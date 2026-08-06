@@ -24,6 +24,7 @@ import {
 import { API_URL } from "@/lib/api";
 import { Category, Produto } from "@/types/produto";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 type Props = {
@@ -39,8 +40,6 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
 
   //Estados dos Filtros
   const [search, setSearch] = useState("");
@@ -106,7 +105,6 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
 
   function handleCloseEdit() {
     setIsEditModalOpen(false);
-    setIsEditDialogOpen(false);
     setSelectedProduto(null);
   }
 
@@ -122,7 +120,6 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
 
   async function handleRemove(id?: string | number) {
     if (id == null) return handleCloseDelete();
-    setIsRemoving(true);
 
     try {
       const res = await fetch(`${API_URL ?? ""}/products/${id}`, {
@@ -141,7 +138,6 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
       console.error(err);
       alert("Erro ao remover produto.");
     } finally {
-      setIsRemoving(false);
       handleCloseDelete();
     }
   }
@@ -268,11 +264,19 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
             {produtosFiltrados.map((produto) => (
               <TableRow key={produto.id}>
                 <TableCell>
-                  <img
-                    src={produto.imageUrl || "/placeholder-image.png"}
-                    alt={produto.name}
-                    className="h-12 w-12 rounded-lg object-cover border"
-                  />
+                  {produto.imageUrl ? (
+                    <Image
+                      src={produto.imageUrl}
+                      alt={produto.name}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-lg object-cover border"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-gray-50 text-[10px] text-muted-foreground">
+                      Sem imagem
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">
                   <div>

@@ -1,10 +1,11 @@
 "use server";
 
 import { API_URL } from "@/lib/api";
+import { ProdutoFormData } from "@/types/produto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function criarProdutoAction(data: any) {
+export async function criarProdutoAction(data: ProdutoFormData) {
   const response = await fetch(`${API_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
