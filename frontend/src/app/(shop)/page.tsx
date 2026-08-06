@@ -2,67 +2,32 @@ import AboutSection from "@/components/shop/AboutPage";
 import BestSellers from "@/components/shop/BestSellers";
 import Categories from "@/components/shop/Categories";
 import Hero from "@/components/shop/Hero";
-import ProductCard from "@/components/shop/product-card";
+import { API_URL } from "@/lib/api";
+import { Produto } from "@/types/produto";
 
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  image?: string;
-  description?: string;
-};
+export const dynamic = "force-dynamic";
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: "1",
-    name: "Smoothie de Morango",
-    price: 12.5,
-    image: "/assets/prod1.jpg",
-    description: "Delicioso smoothie fresco",
-  },
-  {
-    id: "2",
-    name: "Bowl Energético",
-    price: 24.9,
-    image: "/assets/prod2.jpg",
-    description: "Toppings saudáveis",
-  },
-  {
-    id: "3",
-    name: "Refeição Pronta Fit",
-    price: 29.9,
-    image: "/assets/prod3.jpg",
-    description: "Pronta para levar",
-  },
-  {
-    id: "4",
-    name: "Suco Verde",
-    price: 9.5,
-    image: "/assets/prod4.jpg",
-    description: "Refrescante e nutritivo",
-  },
-  {
-    id: "5",
-    name: "Barra de Proteína",
-    price: 7.0,
-    image: "/assets/prod5.jpg",
-    description: "Rápido e prático",
-  },
-  {
-    id: "6",
-    name: "Iogurte com Granola",
-    price: 15.0,
-    image: "/assets/prod6.jpg",
-    description: "Combinação perfeita",
-  },
-];
+async function getFeaturedProducts(): Promise<Produto[]> {
+  try {
+    const res = await fetch(`${API_URL}/products`, { cache: "no-store" });
 
-export default function ShopPage() {
+    if (!res.ok) return [];
+
+    const products: Produto[] = await res.json();
+    return products.filter((product) => product.active).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+export default async function ShopPage() {
+  const featuredProducts = await getFeaturedProducts();
+
   return (
     <main>
       <Hero />
       <Categories />
-      <BestSellers />
+      <BestSellers products={featuredProducts} />
       <AboutSection />
     </main>
   );
