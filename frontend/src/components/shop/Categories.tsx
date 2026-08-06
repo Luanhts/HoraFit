@@ -1,6 +1,7 @@
 "use client";
 
 import { Apple, Coffee, Dumbbell, Salad } from "lucide-react";
+import Link from "next/link";
 
 const CATEGORIAS = [
   {
@@ -47,8 +48,9 @@ export default function Categories() {
           {CATEGORIAS.map((cat) => {
             const IconComponent = cat.icon;
             return (
-              <div
+              <Link
                 key={cat.id}
+                href="/produtos"
                 className="flex flex-col items-center gap-4 cursor-pointer group"
               >
                 {/* O Segredo da Animação: 
@@ -70,7 +72,7 @@ export default function Categories() {
                 <span className="text-sm font-semibold text-gray-900 transition-colors duration-300 group-hover:text-gray-600">
                   {cat.name}
                 </span>
-              </div>
+              </Link>
             );
           })}
         </div>

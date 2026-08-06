@@ -1,12 +1,14 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import { User, ShoppingCart } from "lucide-react";
 import logo from "@/assets/HoraFitLogo.jpg";
 import Image from "next/image";
+import { useCart } from "@/features/cart/cart-context";
 
 export default function Navbar() {
-  // Número mockado de itens no carrinho (igual ao '3' da imagem)
-  const cartItemsCount = 3;
+  const { itemsCount: cartItemsCount } = useCart();
 
   return (
     <header className="w-full bg-white/80 backdrop-blur-md border-b border-gray-100/80 sticky top-0 z-50">

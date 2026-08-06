@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -21,27 +22,31 @@ export default function Hero() {
             </h1>
 
             <p className="mt-6 text-base sm:text-lg text-gray-500 max-w-lg font-normal leading-relaxed">
-              Descubra sabores incríveis e saudáveis. Smoothies, bowls,
-              refeições prontas e muito mais para você viver com energia!
+              Conheça uma curadoria de produtos saudáveis, suplementos,
+              refeições práticas e itens para uma rotina com mais energia.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
               {/* Botão Principal Rosa */}
               <Button
+                asChild
                 variant="default"
                 size="lg"
                 className="cursor-pointer rounded-xl px-7 py-4 font-medium shadow-sm transition-all flex items-center gap-2 text-sm"
               >
-                Ver Cardápio <ArrowRight className="h-4 w-4" />
+                <Link href="/produtos">
+                  Ver Cardápio <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
 
               {/* Botão Secundário Branco */}
               <Button
+                asChild
                 variant="secondaryBtn"
                 size="lg"
                 className="cursor-pointer border border-gray-200 rounded-xl px-7 py-4 font-medium shadow-sm transition-all text-sm"
               >
-                Saiba Mais
+                <Link href="/#sobre">Saiba Mais</Link>
               </Button>
             </div>
           </div>

@@ -27,6 +27,7 @@ model Product {
   // Relacionamento: Um Produto pertence a UMA Categoria
   category    Category @relation(fields: [categoryId], references: [id])
   categoryId  Int
+  orderItems  OrderItem[]
 
   @@map("products") // Nome da tabela no banco (plural/minúsculo)
 }
@@ -38,4 +39,44 @@ model Category {
   products  Product[]
 
   @@map("categories")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  notes         String?     @db.Text
+  status        OrderStatus @default(PENDING)
+  total         Decimal     @db.Decimal(10, 2)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELED
 }

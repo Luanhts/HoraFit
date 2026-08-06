@@ -265,7 +265,7 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {produtos.map((produto) => (
+            {produtosFiltrados.map((produto) => (
               <TableRow key={produto.id}>
                 <TableCell>
                   <img

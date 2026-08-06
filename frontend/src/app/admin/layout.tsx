@@ -11,7 +11,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
 
   const menuItems = [
-    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/produtos', icon: Package, label: 'Produtos' },
     { path: '/admin/pedidos', icon: ShoppingBag, label: 'Pedidos' },
 
@@ -71,9 +71,9 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-destructive cursor-pointer"
-            onClick={() => {
-              // implementar logout
-              console.log('Logout')
+            onClick={async () => {
+              await fetch('/api/admin/logout', { method: 'POST' })
+              window.location.href = '/sign-in'
             }}
           >
             <LogOut className="h-5 w-5" />

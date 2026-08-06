@@ -2,6 +2,8 @@ import { API_URL } from "@/lib/api";
 import { Category, Produto } from "@/types/produto";
 import ProdutosClient from "./ProdutosClient";
 
+export const dynamic = "force-dynamic";
+
 // Ambas as funções rodam no servidor (Server Component).
 // As requisições são paralelas com Promise.all para reduzir o tempo de carregamento.
 

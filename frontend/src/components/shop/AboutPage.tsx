@@ -2,7 +2,7 @@
 
 export default function AboutSection() {
   return (
-    <section className="w-full py-16 bg-white">
+    <section id="sobre" className="w-full py-16 bg-white">
       <div className="container mx-auto px-4 max-w-4xl text-center">
         {/* Título Principal */}
         <h2 className="text-3xl font-extrabold text-[#111827] tracking-tight mb-8">
