@@ -6,6 +6,9 @@ async function bootstrap() {
   app.enableCors();
   const port = process.env.PORT ?? 3333;
   await app.listen(port);
-  console.log(`🚀 Server is running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});

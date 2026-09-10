@@ -2,21 +2,30 @@ import AboutSection from "@/components/shop/AboutPage";
 import BestSellers from "@/components/shop/BestSellers";
 import Categories from "@/components/shop/Categories";
 import Hero from "@/components/shop/Hero";
-import { API_URL } from "@/lib/api";
+import { getApiUrl } from "@/lib/api";
 import { Produto } from "@/types/produto";
 
 export const dynamic = "force-dynamic";
 
-async function getFeaturedProducts(): Promise<Produto[]> {
-  try {
-    const res = await fetch(`${API_URL}/products`, { cache: "no-store" });
+type FeaturedProductsResult =
+  | { products: Produto[]; error: null }
+  | { products: []; error: string };
 
-    if (!res.ok) return [];
+async function getFeaturedProducts(): Promise<FeaturedProductsResult> {
+  try {
+    const apiUrl = getApiUrl();
+    const res = await fetch(`${apiUrl}/products`, { cache: "no-store" });
+
+    if (!res.ok) {
+      console.error(`Falha ao buscar destaques: GET /products retornou ${res.status}.`);
+      return { products: [], error: "Não foi possível carregar os produtos agora." };
+    }
 
     const products: Produto[] = await res.json();
-    return products.filter((product) => product.active).slice(0, 4);
-  } catch {
-    return [];
+    return { products: products.filter((product) => product.active).slice(0, 4), error: null };
+  } catch (error) {
+    console.error("Falha ao conectar com a API para buscar destaques:", error);
+    return { products: [], error: "Não foi possível conectar ao servidor de produtos." };
   }
 }
 
@@ -27,7 +36,7 @@ export default async function ShopPage() {
     <main>
       <Hero />
       <Categories />
-      <BestSellers products={featuredProducts} />
+      <BestSellers products={featuredProducts.products} error={featuredProducts.error} />
       <AboutSection />
     </main>
   );

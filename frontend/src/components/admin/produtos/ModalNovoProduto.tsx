@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FormProdutos, { ProdutoSchema } from "./FormProdutos";
 import { Category, Produto } from "@/types/produto";
-import { API_URL } from "@/lib/api";
 
 type Props = {
   open: boolean;
@@ -33,7 +32,7 @@ export default function ModalNovoProduto({
     setApiError(null);
 
     try {
-      const res = await fetch(`${API_URL}/products`, {
+      const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

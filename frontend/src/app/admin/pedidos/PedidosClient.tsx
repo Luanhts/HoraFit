@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/features/cart/cart-utils';
-import { API_URL } from '@/lib/api';
 import { Order, OrderStatus } from '@/types/order';
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -37,7 +36,7 @@ export default function PedidosClient({ initialOrders }: Props) {
     setUpdatingOrderId(orderId);
 
     try {
-      const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      const res = await fetch(`/api/admin/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),

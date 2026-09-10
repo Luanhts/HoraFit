@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AdminApiKeyGuard } from '../../auth/admin-api-key.guard';
 import { CategoriesService } from './categories.service';
 
 @Controller('categories')
@@ -11,6 +12,7 @@ export class CategoriesController {
   }
 
   @Post()
+  @UseGuards(AdminApiKeyGuard)
   create(@Body() createCategoryDto: { name: string }) {
     return this.categoriesService.create(createCategoryDto);
   }

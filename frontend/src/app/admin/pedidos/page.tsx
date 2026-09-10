@@ -1,4 +1,5 @@
-import { API_URL } from '@/lib/api';
+import { getAdminApiKey } from '@/lib/admin-api';
+import { getApiUrl } from '@/lib/api';
 import { Order } from '@/types/order';
 import PedidosClient from './PedidosClient';
 
@@ -6,12 +7,19 @@ export const dynamic = 'force-dynamic';
 
 async function getOrders(): Promise<Order[]> {
   try {
-    const res = await fetch(`${API_URL}/orders`, { cache: 'no-store' });
+    const res = await fetch(`${getApiUrl()}/orders`, {
+      cache: 'no-store',
+      headers: { 'x-admin-api-key': getAdminApiKey() },
+    });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.error(`Falha ao buscar pedidos admin: GET /orders retornou ${res.status}.`);
+      return [];
+    }
 
     return res.json();
-  } catch {
+  } catch (error) {
+    console.error('Falha ao conectar com a API para buscar pedidos admin:', error);
     return [];
   }
 }

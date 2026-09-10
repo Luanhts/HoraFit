@@ -9,8 +9,16 @@ import { useCart } from '@/features/cart/cart-context';
 import { formatCurrency } from '@/features/cart/cart-utils';
 import { Produto } from '@/types/produto';
 
-export default function ProductCatalogClient({ products }: { products: Produto[] }) {
+export default function ProductCatalogClient({ products, error }: { products: Produto[]; error?: string | null }) {
   const { addItem } = useCart();
+
+  if (error) {
+    return (
+      <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-10 text-center text-sm text-destructive">
+        {error}
+      </div>
+    );
+  }
 
   if (products.length === 0) {
     return (

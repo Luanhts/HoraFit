@@ -1,19 +1,28 @@
-import { API_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import { Produto } from '@/types/produto';
 import ProductCatalogClient from './ProductCatalogClient';
 
 export const dynamic = 'force-dynamic';
 
-async function getProducts(): Promise<Produto[]> {
-  try {
-    const res = await fetch(`${API_URL}/products`, { cache: 'no-store' });
+type ProductsResult =
+  | { products: Produto[]; error: null }
+  | { products: []; error: string };
 
-    if (!res.ok) return [];
+async function getProducts(): Promise<ProductsResult> {
+  try {
+    const apiUrl = getApiUrl();
+    const res = await fetch(`${apiUrl}/products`, { cache: 'no-store' });
+
+    if (!res.ok) {
+      console.error(`Falha ao buscar catálogo: GET /products retornou ${res.status}.`);
+      return { products: [], error: 'Não foi possível carregar o catálogo agora.' };
+    }
 
     const products: Produto[] = await res.json();
-    return products.filter((product) => product.active);
-  } catch {
-    return [];
+    return { products: products.filter((product) => product.active), error: null };
+  } catch (error) {
+    console.error('Falha ao conectar com a API para buscar catálogo:', error);
+    return { products: [], error: 'Não foi possível conectar ao servidor de produtos.' };
   }
 }
 
@@ -30,7 +39,7 @@ export default async function ProdutosPage() {
         </p>
       </div>
 
-      <ProductCatalogClient products={products} />
+      <ProductCatalogClient products={products.products} error={products.error} />
     </main>
   );
 }

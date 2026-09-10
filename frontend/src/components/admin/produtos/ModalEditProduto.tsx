@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FormProdutos, { ProdutoSchema } from "./FormProdutos";
 import { Category, Produto } from "@/types/produto";
-import { API_URL } from "@/lib/api";
 import DialogEditProducts from "./DialogEditProducts";
 
 type Props = {
@@ -38,7 +37,7 @@ export default function ModalEditProduto({
     setApiError(null);
 
     try {
-      const res = await fetch(`${API_URL}/products/${produto.id}`, {
+      const res = await fetch(`/api/admin/products/${produto.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

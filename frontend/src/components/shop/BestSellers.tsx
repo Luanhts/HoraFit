@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function BestSellers({ products }: { products: Produto[] }) {
+export default function BestSellers({ products, error }: { products: Produto[]; error?: string | null }) {
   return (
     <section className="w-full py-14 bg-white">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -33,7 +33,11 @@ export default function BestSellers({ products }: { products: Produto[] }) {
           </Link>
         </div>
 
-        {products.length === 0 ? (
+        {error ? (
+          <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-8 text-center text-sm text-destructive">
+            {error}
+          </div>
+        ) : products.length === 0 ? (
           <div className="rounded-3xl border border-dashed p-8 text-center text-muted-foreground">
             Nenhum produto ativo para destacar no momento.
           </div>

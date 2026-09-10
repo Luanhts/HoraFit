@@ -21,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { API_URL } from "@/lib/api";
 import { Category, Produto } from "@/types/produto";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
 import Image from "next/image";
@@ -122,7 +121,7 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
     if (id == null) return handleCloseDelete();
 
     try {
-      const res = await fetch(`${API_URL ?? ""}/products/${id}`, {
+      const res = await fetch(`/api/admin/products/${id}`, {
         method: "DELETE",
       });
 
