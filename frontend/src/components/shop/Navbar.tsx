@@ -2,13 +2,27 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { User, ShoppingCart } from "lucide-react";
 import logo from "@/assets/HoraFitLogo.jpg";
 import Image from "next/image";
 import { useCart } from "@/features/cart/cart-context";
 
+const navItems = [
+  { href: "/", label: "Início" },
+  { href: "/produtos", label: "Produtos" },
+  { href: "/sobre", label: "Sobre" },
+  { href: "/contato", label: "Contato" },
+];
+
 export default function Navbar() {
   const { itemsCount: cartItemsCount } = useCart();
+  const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/"
+      ? pathname === "/"
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className="w-full bg-white/80 backdrop-blur-md border-b border-gray-100/80 sticky top-0 z-50">
@@ -35,30 +49,19 @@ export default function Navbar() {
 
         {/* LINKS DE NAVEGAÇÃO (Centro) */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href="/"
-            className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors"
-          >
-            Início
-          </Link>
-          <Link
-            href="/produtos"
-            className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-          >
-            Produtos
-          </Link>
-          <Link
-            href="/sobre"
-            className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-          >
-            Sobre
-          </Link>
-          <Link
-            href="/contato"
-            className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-          >
-            Contato
-          </Link>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm hover:text-primary transition-colors ${
+                isActive(item.href)
+                  ? "font-semibold text-gray-900"
+                  : "font-medium text-gray-500"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* ÍCONES DE AÇÃO (Lado Direito) */}
