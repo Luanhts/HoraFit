@@ -55,7 +55,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-3 text-sm font-medium text-gray-500">
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 text-secondary stroke-[2]" />
-                <span>(11) 99999-9999</span>
+                <span>+55 (42) 98441-4671</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-secondary stroke-[2]" />
@@ -68,7 +68,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <MapPin className="h-4 w-4 text-secondary stroke-[2]" />
-                <span>São Paulo, SP</span>
+                <span>Rua Júlia Wanderley 879 loja 01 - Ponta Grossa, PR</span>
               </li>
             </ul>
           </div>
@@ -81,22 +81,12 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               {/* Instagram Card */}
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/ahorafitpg/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center border border-pink-100 text-primary transition-transform hover:scale-110"
               >
                 <Instagram className="h-4 w-4 stroke-[2]" />
-              </a>
-
-              {/* Facebook Card */}
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-secondary-50/60 rounded-full flex items-center justify-center border border-teal-100 text-secondary transition-transform hover:scale-110"
-              >
-                <Facebook className="h-4 w-4 fill-current stroke-none" />
               </a>
             </div>
           </div>
