@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -19,8 +23,13 @@ export class OrdersService {
       throw new BadRequestException('Informe o telefone do cliente.');
     }
 
-    if (!Array.isArray(createOrderDto.items) || createOrderDto.items.length === 0) {
-      throw new BadRequestException('Adicione pelo menos um produto ao pedido.');
+    if (
+      !Array.isArray(createOrderDto.items) ||
+      createOrderDto.items.length === 0
+    ) {
+      throw new BadRequestException(
+        'Adicione pelo menos um produto ao pedido.',
+      );
     }
 
     const itemsByProduct = new Map<number, number>();
@@ -34,16 +43,23 @@ export class OrdersService {
       }
 
       if (!Number.isInteger(quantity) || quantity <= 0) {
-        throw new BadRequestException('A quantidade dos itens deve ser maior que zero.');
+        throw new BadRequestException(
+          'A quantidade dos itens deve ser maior que zero.',
+        );
       }
 
-      itemsByProduct.set(productId, (itemsByProduct.get(productId) ?? 0) + quantity);
+      itemsByProduct.set(
+        productId,
+        (itemsByProduct.get(productId) ?? 0) + quantity,
+      );
     }
 
-    const normalizedItems = Array.from(itemsByProduct.entries()).map(([productId, quantity]) => ({
-      productId,
-      quantity,
-    }));
+    const normalizedItems = Array.from(itemsByProduct.entries()).map(
+      ([productId, quantity]) => ({
+        productId,
+        quantity,
+      }),
+    );
 
     return this.prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
@@ -51,10 +67,14 @@ export class OrdersService {
       });
 
       if (products.length !== normalizedItems.length) {
-        throw new BadRequestException('Um ou mais produtos não foram encontrados.');
+        throw new BadRequestException(
+          'Um ou mais produtos não foram encontrados.',
+        );
       }
 
-      const productsById = new Map(products.map((product) => [product.id, product]));
+      const productsById = new Map(
+        products.map((product) => [product.id, product]),
+      );
       let total = 0;
 
       const orderItems: Array<{
@@ -68,11 +88,15 @@ export class OrdersService {
         const product = productsById.get(item.productId);
 
         if (!product || !product.active) {
-          throw new BadRequestException(`Produto #${item.productId} indisponível.`);
+          throw new BadRequestException(
+            `Produto #${item.productId} indisponível.`,
+          );
         }
 
         if (product.stock < item.quantity) {
-          throw new BadRequestException(`Estoque insuficiente para ${product.name}.`);
+          throw new BadRequestException(
+            `Estoque insuficiente para ${product.name}.`,
+          );
         }
 
         const unitPrice = Number(product.price);
@@ -89,7 +113,9 @@ export class OrdersService {
         });
 
         if (stockUpdate.count !== 1) {
-          throw new BadRequestException(`Estoque insuficiente para ${product.name}.`);
+          throw new BadRequestException(
+            `Estoque insuficiente para ${product.name}.`,
+          );
         }
 
         orderItems.push({
@@ -153,6 +179,21 @@ export class OrdersService {
       throw new BadRequestException('Status de pedido inválido.');
     }
 
+    const order = await this.prisma.order.findUnique({ where: { id } });
+
+    if (!order) {
+      throw new NotFoundException(`Pedido #${id} não encontrado.`);
+    }
+
+    if (
+      order.status !== status &&
+      !this.isAllowedStatusTransition(order.status, status)
+    ) {
+      throw new BadRequestException(
+        `Não é possível alterar um pedido de ${order.status} para ${status}.`,
+      );
+    }
+
     try {
       return await this.prisma.order.update({
         where: { id },
@@ -170,5 +211,18 @@ export class OrdersService {
 
       throw error;
     }
+  }
+
+  private isAllowedStatusTransition(from: OrderStatus, to: OrderStatus) {
+    const transitions: Record<OrderStatus, OrderStatus[]> = {
+      PENDING: [OrderStatus.CONFIRMED, OrderStatus.CANCELED],
+      CONFIRMED: [OrderStatus.PREPARING, OrderStatus.CANCELED],
+      PREPARING: [OrderStatus.READY, OrderStatus.CANCELED],
+      READY: [OrderStatus.DELIVERED, OrderStatus.CANCELED],
+      DELIVERED: [],
+      CANCELED: [],
+    };
+
+    return transitions[from].includes(to);
   }
 }

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { API_URL } from '@/lib/api';
 import { useCart } from '@/features/cart/cart-context';
 import { formatCurrency, getCartTotal } from '@/features/cart/cart-utils';
 
@@ -29,7 +28,7 @@ function CheckoutContent() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${API_URL}/orders`, {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

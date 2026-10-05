@@ -1,4 +1,4 @@
-import { API_URL } from "@/lib/api";
+import { getApiUrl } from "@/lib/api";
 import { Category, Produto } from "@/types/produto";
 import ProdutosClient from "./ProdutosClient";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 async function getProdutos(): Promise<Produto[]> {
   try {
-    const res = await fetch(`${API_URL}/products`, {
+    const res = await fetch(`${getApiUrl()}/products`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Erro ao buscar produtos");
@@ -22,7 +22,7 @@ async function getProdutos(): Promise<Produto[]> {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    const res = await fetch(`${API_URL}/categories`, {
+    const res = await fetch(`${getApiUrl()}/categories`, {
       // Categorias mudam raramente — pode usar cache padrão ou revalidar a cada hora
       next: { revalidate: 3600 },
     });

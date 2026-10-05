@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { API_URL } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 import { Produto } from '@/types/produto';
 import ProductDetailClient from './ProductDetailClient';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 async function getProduct(id: string): Promise<Produto | null> {
   try {
-    const res = await fetch(`${API_URL}/products/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${getApiUrl()}/products/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   } catch {
