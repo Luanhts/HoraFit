@@ -7,8 +7,8 @@ const CONTACT_CHANNELS = [
   {
     title: "Telefone",
     description: "Fale com nossa equipe pelo WhatsApp ou ligação.",
-    value: "(11) 99999-9999",
-    href: "tel:+5511999999999",
+    value: "+55 (42) 98441-4671",
+    href: "tel:+5542984414671",
     icon: Phone,
     className: "bg-pink-50 text-primary border-pink-100",
   },
@@ -22,9 +22,9 @@ const CONTACT_CHANNELS = [
   },
   {
     title: "Localização",
-    description: "Atendimento e entregas na região de São Paulo.",
-    value: "São Paulo, SP",
-    href: "https://maps.google.com/?q=S%C3%A3o%20Paulo%2C%20SP",
+    description: "Atendimento e entregas na região dos Campos Gerais.",
+    value: "Rua Júlia Wanderley 879 loja 01 - Ponta Grossa, PR",
+    href: "https://maps.google.com/?q=Rua+Júlia+Wanderley+879+loja+01+-+Ponta+Grossa%2C+PR",
     icon: MapPin,
     className: "bg-pink-50 text-primary border-pink-100",
   },
@@ -114,7 +114,7 @@ export default function ContatoPage() {
                 Veja lançamentos, dicas e atualizações do cardápio pelos nossos canais sociais.
               </p>
               <Button asChild variant="secondaryBtn" className="mt-5 rounded-xl bg-white font-semibold">
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/ahorafitpg/" target="_blank" rel="noopener noreferrer">
                   Ver Instagram
                 </a>
               </Button>
