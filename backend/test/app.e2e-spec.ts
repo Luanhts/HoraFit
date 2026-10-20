@@ -111,6 +111,35 @@ describe('AppController (e2e)', () => {
       .expect(400);
   });
 
+  it('/orders (POST) rejects unknown fields before accessing the database', async () => {
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send({
+        customerName: 'Cliente Teste',
+        customerPhone: '11999999999',
+        items: [{ productId: 1, quantity: 1 }],
+        status: 'DELIVERED',
+      })
+      .expect(400)
+      .expect((response) => {
+        expect(response.body).toMatchObject({ message: 'Dados inválidos.' });
+      });
+
+    expect(prismaMock.order.findMany).not.toHaveBeenCalled();
+  });
+
+  it('/orders (POST) rejects invalid customer data', () => {
+    return request(app.getHttpServer())
+      .post('/orders')
+      .send({
+        customerName: 'Cliente Teste',
+        customerPhone: '123',
+        customerEmail: 'email-invalido',
+        items: [{ productId: 1, quantity: 1 }],
+      })
+      .expect(400);
+  });
+
   it('/products (POST) blocks requests without admin API key', () => {
     return request(app.getHttpServer())
       .post('/products')
@@ -145,6 +174,39 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/products (POST) rejects invalid stock with a valid admin API key', async () => {
+    await request(app.getHttpServer())
+      .post('/products')
+      .set('x-admin-api-key', 'test-admin-key')
+      .send({
+        name: 'Produto Teste',
+        price: 10,
+        sku: 'SKU-TESTE',
+        stock: -1,
+        categoryId: 1,
+        active: true,
+      })
+      .expect(400);
+
+    expect(prismaMock.product.create).not.toHaveBeenCalled();
+  });
+
+  it('/products/:id (PATCH) rejects mass assignment', async () => {
+    await request(app.getHttpServer())
+      .patch('/products/1')
+      .set('x-admin-api-key', 'test-admin-key')
+      .send({ name: 'Nome atualizado', createdAt: new Date().toISOString() })
+      .expect(400);
+
+    expect(prismaMock.product.update).not.toHaveBeenCalled();
+  });
+
+  it('/products/:id (GET) rejects an invalid identifier', () => {
+    return request(app.getHttpServer())
+      .get('/products/not-a-number')
+      .expect(400);
+  });
+
   it('/categories (POST) blocks requests without admin API key', () => {
     return request(app.getHttpServer())
       .post('/categories')
@@ -161,6 +223,16 @@ describe('AppController (e2e)', () => {
       .expect((response) => {
         expect(response.body).toMatchObject({ id: 1, name: 'Categoria Teste' });
       });
+  });
+
+  it('/categories (POST) rejects blank names', async () => {
+    await request(app.getHttpServer())
+      .post('/categories')
+      .set('x-admin-api-key', 'test-admin-key')
+      .send({ name: '   ' })
+      .expect(400);
+
+    expect(prismaMock.category.create).not.toHaveBeenCalled();
   });
 
   it('/orders (GET) blocks requests without admin API key', () => {
@@ -193,5 +265,23 @@ describe('AppController (e2e)', () => {
       .expect((response) => {
         expect(response.body).toMatchObject({ id: 1 });
       });
+  });
+
+  it('/orders/:id/status (PATCH) rejects invalid status values', async () => {
+    await request(app.getHttpServer())
+      .patch('/orders/1/status')
+      .set('x-admin-api-key', 'test-admin-key')
+      .send({ status: 'INVALID' })
+      .expect(400);
+
+    expect(prismaMock.order.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.order.update).not.toHaveBeenCalled();
+  });
+
+  it('/orders/:id (GET) rejects non-positive identifiers', () => {
+    return request(app.getHttpServer())
+      .get('/orders/0')
+      .set('x-admin-api-key', 'test-admin-key')
+      .expect(400);
   });
 });

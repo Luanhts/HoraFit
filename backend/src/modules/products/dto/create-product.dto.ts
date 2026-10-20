@@ -1,10 +1,4 @@
-export class CreateProductDto {
-  name: string;
-  price: number;
-  sku: string;
-  categoryId: number;
-  description?: string;
-  imageUrl?: string;
-  stock?: number;
-  active?: boolean;
-}
+import { z } from 'zod';
+import { createProductSchema } from '../../../schemas/product-schema';
+
+export type CreateProductDto = z.infer<typeof createProductSchema>;

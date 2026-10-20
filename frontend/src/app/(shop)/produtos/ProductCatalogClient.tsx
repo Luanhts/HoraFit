@@ -20,7 +20,7 @@ export default function ProductCatalogClient({ products, error }: { products: Pr
     setAddedProductId(product.id);
     toast.success(`${product.name} adicionado ao carrinho.`);
 
-    window.setTimeout(() => setAddedProductId(null), 1400);
+    window.setTimeout(() => setAddedProductId(null), 2500);
   }
 
   if (error) {
@@ -73,7 +73,7 @@ export default function ProductCatalogClient({ products, error }: { products: Pr
                     disabled={!isAvailable}
                     onClick={() => handleAddToCart(product, price)}
                     className={`gap-2 rounded-xl transition-all cursor-pointer hover:shadow-md active:scale-[0.97] ${
-                      wasAdded ? 'bg-secondary text-white shadow-md hover:bg-secondary/80' : ''
+                      wasAdded ? 'bg-secondary text-white shadow-md ring-2 ring-primary/20 hover:bg-secondary/80' : ''
                     }`}
                   >
                     {wasAdded ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
@@ -82,9 +82,13 @@ export default function ProductCatalogClient({ products, error }: { products: Pr
                 </div>
 
                 {wasAdded && (
-                  <p className="text-right text-xs font-semibold text-primary" role="status">
-                    Produto adicionado ao carrinho.
-                  </p>
+                  <div
+                    className="flex items-center justify-end gap-2 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary shadow-sm"
+                    role="status"
+                  >
+                    <Check className="h-4 w-4" />
+                    Adicionado ao carrinho.
+                  </div>
                 )}
               </div>
             </div>

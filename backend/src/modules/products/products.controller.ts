@@ -9,9 +9,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AdminApiKeyGuard } from '../../auth/admin-api-key.guard';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { positiveIdSchema } from '../../schemas/id-schema';
+import {
+  createProductSchema,
+  updateProductSchema,
+} from '../../schemas/product-schema';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import type { CreateProductDto } from './dto/create-product.dto';
+import type { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -19,7 +25,10 @@ export class ProductsController {
 
   @Post()
   @UseGuards(AdminApiKeyGuard)
-  create(@Body() createProductDto: CreateProductDto) {
+  create(
+    @Body(new ZodValidationPipe(createProductSchema))
+    createProductDto: CreateProductDto,
+  ) {
     return this.productsService.create(createProductDto);
   }
 
@@ -29,19 +38,23 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+  findOne(@Param('id', new ZodValidationPipe(positiveIdSchema)) id: number) {
+    return this.productsService.findOne(id);
   }
 
   @Patch(':id')
   @UseGuards(AdminApiKeyGuard)
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
+  update(
+    @Param('id', new ZodValidationPipe(positiveIdSchema)) id: number,
+    @Body(new ZodValidationPipe(updateProductSchema))
+    updateProductDto: UpdateProductDto,
+  ) {
+    return this.productsService.update(id, updateProductDto);
   }
 
   @Delete(':id')
   @UseGuards(AdminApiKeyGuard)
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  remove(@Param('id', new ZodValidationPipe(positiveIdSchema)) id: number) {
+    return this.productsService.remove(id);
   }
 }

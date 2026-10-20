@@ -1,7 +1,30 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import type { CreateProductDto } from './dto/create-product.dto';
+import type { UpdateProductDto } from './dto/update-product.dto';
+
+function isPrismaError(
+  error: unknown,
+  code: string,
+): error is Prisma.PrismaClientKnownRequestError {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
+  );
+}
+
+function isDuplicateSkuError(error: unknown) {
+  if (!isPrismaError(error, 'P2002')) return false;
+
+  const target = error.meta?.target;
+  return Array.isArray(target)
+    ? target.includes('sku')
+    : typeof target === 'string' && target.includes('sku');
+}
 
 @Injectable()
 export class ProductsService {
@@ -23,8 +46,8 @@ export class ProductsService {
         },
         include: { category: true },
       });
-    } catch (error: any) {
-      if (error?.code === 'P2002' && error?.meta?.target?.includes('sku')) {
+    } catch (error: unknown) {
+      if (isDuplicateSkuError(error)) {
         throw new BadRequestException('Este SKU já está em uso.');
       }
       throw error;
@@ -54,16 +77,25 @@ export class ProductsService {
     try {
       return await this.prisma.product.update({
         where: { id },
-        data: updateProductDto,
+        data: {
+          name: updateProductDto.name,
+          description: updateProductDto.description,
+          price: updateProductDto.price,
+          sku: updateProductDto.sku,
+          stock: updateProductDto.stock,
+          imageUrl: updateProductDto.imageUrl,
+          active: updateProductDto.active,
+          categoryId: updateProductDto.categoryId,
+        },
         include: { category: true },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // P2025: registro não encontrado
-      if (error?.code === 'P2025') {
+      if (isPrismaError(error, 'P2025')) {
         throw new NotFoundException(`Produto #${id} não encontrado.`);
       }
       // P2002: violação de unique constraint (SKU duplicado)
-      if (error?.code === 'P2002' && error?.meta?.target?.includes('sku')) {
+      if (isDuplicateSkuError(error)) {
         throw new BadRequestException('Este SKU já está em uso.');
       }
       throw error;
@@ -74,8 +106,8 @@ export class ProductsService {
     try {
       await this.prisma.product.delete({ where: { id } });
       return { message: `Produto #${id} removido com sucesso.` };
-    } catch (error: any) {
-      if (error?.code === 'P2025') {
+    } catch (error: unknown) {
+      if (isPrismaError(error, 'P2025')) {
         throw new NotFoundException(`Produto #${id} não encontrado.`);
       }
       throw error;
