@@ -1,9 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import type { CreateOrderDto } from './dto/create-order.dto';
 
@@ -179,41 +180,69 @@ export class OrdersService {
       throw new BadRequestException('Status de pedido inválido.');
     }
 
-    const order = await this.prisma.order.findUnique({ where: { id } });
-
-    if (!order) {
-      throw new NotFoundException(`Pedido #${id} não encontrado.`);
-    }
-
-    if (
-      order.status !== status &&
-      !this.isAllowedStatusTransition(order.status, status)
-    ) {
-      throw new BadRequestException(
-        `Não é possível alterar um pedido de ${order.status} para ${status}.`,
-      );
-    }
-
-    try {
-      return await this.prisma.order.update({
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
         where: { id },
-        data: { status },
         include: {
           items: {
             include: { product: { include: { category: true } } },
           },
         },
       });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
+
+      if (!order) {
         throw new NotFoundException(`Pedido #${id} não encontrado.`);
       }
 
-      throw error;
-    }
+      if (order.status === status) {
+        return order;
+      }
+
+      if (!this.isAllowedStatusTransition(order.status, status)) {
+        throw new BadRequestException(
+          `Não é possível alterar um pedido de ${order.status} para ${status}.`,
+        );
+      }
+
+      const statusUpdate = await tx.order.updateMany({
+        where: { id, status: order.status },
+        data: { status },
+      });
+
+      if (statusUpdate.count !== 1) {
+        throw new ConflictException(
+          'O pedido foi atualizado por outra operação. Recarregue os dados e tente novamente.',
+        );
+      }
+
+      if (status === OrderStatus.CANCELED) {
+        const items = [...order.items].sort(
+          (left, right) => left.productId - right.productId,
+        );
+
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+      }
+
+      const updatedOrder = await tx.order.findUnique({
+        where: { id },
+        include: {
+          items: {
+            include: { product: { include: { category: true } } },
+          },
+        },
+      });
+
+      if (!updatedOrder) {
+        throw new NotFoundException(`Pedido #${id} não encontrado.`);
+      }
+
+      return updatedOrder;
+    });
   }
 
   private isAllowedStatusTransition(from: OrderStatus, to: OrderStatus) {

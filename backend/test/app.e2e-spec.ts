@@ -34,6 +34,7 @@ describe('AppController (e2e)', () => {
     items: [],
   };
   const prismaMock = {
+    $transaction: jest.fn(),
     $connect: jest.fn(),
     $disconnect: jest.fn(),
     $queryRaw: jest.fn(),
@@ -51,12 +52,17 @@ describe('AppController (e2e)', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
 
   beforeEach(async () => {
     process.env.ADMIN_API_KEY = 'test-admin-key';
     jest.clearAllMocks();
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) =>
+        callback(prismaMock),
+    );
     prismaMock.$queryRaw.mockResolvedValue([{ '?column?': 1 }]);
     prismaMock.product.findMany.mockResolvedValue([]);
     prismaMock.product.create.mockResolvedValue(productResponse);
@@ -67,6 +73,7 @@ describe('AppController (e2e)', () => {
     prismaMock.order.findMany.mockResolvedValue([orderResponse]);
     prismaMock.order.findUnique.mockResolvedValue(orderResponse);
     prismaMock.order.update.mockResolvedValue(orderResponse);
+    prismaMock.order.updateMany.mockResolvedValue({ count: 1 });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -265,6 +272,31 @@ describe('AppController (e2e)', () => {
       .expect((response) => {
         expect(response.body).toMatchObject({ id: 1 });
       });
+  });
+
+  it('/orders/:id/status (PATCH) restores stock when canceling', async () => {
+    const pendingOrder = {
+      ...orderResponse,
+      items: [{ productId: 1, quantity: 2, product: productResponse }],
+    };
+    const canceledOrder = { ...pendingOrder, status: 'CANCELED' };
+    prismaMock.order.findUnique
+      .mockResolvedValueOnce(pendingOrder)
+      .mockResolvedValueOnce(canceledOrder);
+
+    await request(app.getHttpServer())
+      .patch('/orders/1/status')
+      .set('x-admin-api-key', 'test-admin-key')
+      .send({ status: 'CANCELED' })
+      .expect(200)
+      .expect((response) => {
+        expect(response.body).toMatchObject({ id: 1, status: 'CANCELED' });
+      });
+
+    expect(prismaMock.product.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { stock: { increment: 2 } },
+    });
   });
 
   it('/orders/:id/status (PATCH) rejects invalid status values', async () => {
