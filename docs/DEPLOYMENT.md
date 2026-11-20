@@ -95,6 +95,8 @@ Execute a partir da raiz.
 
 Não há script de teste, E2E, cobertura ou typecheck isolado no frontend.
 
+O frontend usa Next.js 16.4.6 com `eslint-config-next` da mesma versão. O script de build fixa `next build --webpack`: a compilação e a checagem TypeScript passaram com Webpack, enquanto Turbopack falhou ao iniciar o processo de CSS no ambiente local de validação. A opção `--webpack` é suportada pelo Next.js 16; reavaliar o bundler em uma mudança isolada depois de validar Turbopack no ambiente de CI/deploy. O build busca Geist e Geist Mono pelo `next/font/google`, portanto o ambiente de build precisa alcançar Google Fonts.
+
 ### Backend
 
 | Objetivo | Comando |

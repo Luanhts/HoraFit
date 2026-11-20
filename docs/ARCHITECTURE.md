@@ -27,7 +27,7 @@ Navegador
 
 | Camada | Tecnologia |
 | --- | --- |
-| Frontend | Next.js 16.4.3, React 19.2.0 e TypeScript 5.9.3 |
+| Frontend | Next.js 16.4.6, React 19.2.0 e TypeScript 5.9.3 |
 | UI | Tailwind CSS 4.1.17, Radix UI, componentes no padrão shadcn/ui, Lucide e Sonner |
 | Formulários | React Hook Form 7.71.2 e Zod 4.3.6 |
 | Backend | NestJS 11.2.9, TypeScript 5.9.3, Zod 4.6.7 e `@nestjs/throttler` 6.7.1 |
