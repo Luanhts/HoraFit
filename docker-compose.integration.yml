@@ -1,0 +1,16 @@
+services:
+  db-integration:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: horafit_test
+      POSTGRES_PASSWORD: ${HORAFIT_TEST_DB_PASSWORD:?Definida pelo runner de testes}
+      POSTGRES_DB: horafit_integration_test
+    ports:
+      - "127.0.0.1::5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U horafit_test -d horafit_integration_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

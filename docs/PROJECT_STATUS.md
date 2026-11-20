@@ -8,17 +8,23 @@ Este documento registra o estado observado em uma data. Não é uma lista de fun
 
 ## Atualização incremental — 20/11/2026
 
+A confirmação do checkout agora depende de resposta `201` com ID válido da API, em memória na página. Uma URL com `?pedido=` não mostra mais sucesso. Resposta incompleta mantém carrinho e chave para retry; após recarga, a confirmação visual não é restaurada. A futura consulta pública segura do pedido ainda depende de identificador não enumerável e prova de posse.
+
+O checkout agora envia `Idempotency-Key` e reutiliza a chave em retry do mesmo payload na mesma aba. O backend persiste hash da chave, hash do payload e ID do pedido na transação de criação. Retry com a mesma chave não duplica pedido nem baixa; dados diferentes retornam `409`. A terceira migration é aditiva e passou na suíte PostgreSQL descartável (nove cenários). Clientes legados sem header continuam sujeitos a duplicação. Nenhuma migration foi aplicada em produção.
+
 O responsável confirmou que a cópia examinada é a versão atual e que as etapas de pagamento, recebimento e Analytics provavelmente não foram implementadas. A leitura do schema, rotas e frontend sustenta a ausência dessas funcionalidades nesta versão. A prontidão para vendas com PIX/cartão e as três modalidades aprovadas permanece bloqueada; veja [ROADMAP_FASE3.md](ROADMAP_FASE3.md).
 
 O cálculo de `unitPrice`, `subtotal` e `total` em `OrdersService.create` passou a usar `Prisma.Decimal` de ponta a ponta. Subtotal ou total acima do limite de `Decimal(10,2)` retorna erro de negócio antes da criação do pedido. A fotografia e a lista de riscos abaixo permanecem como registro de 15/11/2026; o risco de cálculo intermediário em ponto flutuante está corrigido nesta cópia de trabalho, ainda não publicada.
 
-Os itens agregados agora são ordenados por `productId` antes das baixas de estoque. Isso padroniza a ordem de aquisição dos locks entre carrinhos equivalentes e reduz o risco de deadlock; a garantia de concorrência ainda requer teste com PostgreSQL real. A criação de pedidos continua sem idempotência e sem expiração de estoque pendente.
+Os itens agregados agora são ordenados por `productId` antes das baixas de estoque. Isso padroniza a ordem de aquisição dos locks entre carrinhos equivalentes e reduz o risco de deadlock. A criação com chave tem idempotência; a expiração de estoque pendente continua ausente.
+
+A suíte `test:postgres` passou com PostgreSQL 16 descartável: aplicou três migrations e validou nove cenários de criação, rollback, concorrência, cancelamento e idempotência. Isso cobre o fluxo comercial atual em banco real, sem provar resistência a carga ou ausência universal de deadlocks. As seções abaixo continuam sendo a fotografia histórica de 15/11/2026.
 
 ## Resumo executivo
 
 A Hora Fit possui um MVP integrado de catálogo, carrinho local, criação de pedidos, administração de produtos e gestão operacional de pedidos. O backend valida produtos, usa preços do banco, baixa estoque transacionalmente e repõe estoque no cancelamento.
 
-O projeto ainda não representa um e-commerce completo. Pagamento e modelagem de recebimento não existem; o andamento operacional atual não distingue modalidade, endereço, envio ou rastreio. Pedidos públicos consomem estoque antes de pagamento; não há idempotência, expiração de pendências ou confirmação segura. Os testes não exercitam PostgreSQL real e o frontend não possui suíte automatizada.
+O projeto ainda não representa um e-commerce completo. Pagamento e modelagem de recebimento não existem; o andamento operacional atual não distingue modalidade, endereço, envio ou rastreio. Pedidos públicos consomem estoque antes de pagamento; não há expiração de pendências ou confirmação pública segura. A idempotência por chave e os testes PostgreSQL foram adicionados após a fotografia original; o frontend não possui suíte automatizada.
 
 ## Decisões comerciais aprovadas
 
@@ -71,7 +77,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 | Catálogo | Sem busca, ordenação, paginação ou filtro público real por categoria |
 | Carrinho | Não valida o formato persistido nem revalida preço/estoque antes de exibir |
 | Dinheiro | Banco usa Decimal, mas cálculo intermediário usa `number` |
-| Confirmação | Mostra sucesso com base apenas em `pedido` na query string |
+| Confirmação | Mostra sucesso após resposta válida da API; não permite rever a confirmação após recarga |
 | Categorias | API lista/cria; sem tela completa, edição, exclusão ou unicidade |
 | Upload | Seletor visual não envia arquivo; operação real usa URL |
 | Produtos admin | Falha da API pode aparecer como lista vazia; sem paginação |
@@ -90,7 +96,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 - Integração técnica de PIX e cartão, status financeiro e provedor de pagamento, embora os dois meios estejam comercialmente aprovados.
 - Webhooks, deduplicação de eventos, captura, estorno ou reembolso.
 - Modelagem das três modalidades aprovadas, endereço, taxa, prazo, rastreio e área atendida.
-- Chave de idempotência para criação de pedidos.
+- Proteção obrigatória para clientes legados que não enviam chave idempotente.
 - Expiração de pedidos pendentes e liberação automática de estoque.
 - Confirmação pública segura e consulta do pedido pelo cliente.
 - Conta, perfil ou histórico do cliente; o link `/perfil` leva a rota inexistente.
@@ -108,8 +114,8 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 | Risco | Impacto |
 | --- | --- |
 | Pedido público baixa estoque sem pagamento | Pedidos abandonados ou falsos podem indisponibilizar catálogo |
-| Ausência de idempotência | Retry ou repetição pode criar pedido e baixa duplicados |
-| Confirmação baseada na URL | Interface pode informar sucesso para pedido inexistente |
+| Cliente sem chave idempotente | Retry ou repetição pode criar pedido e baixa duplicados |
+| Confirmação sem consulta pública | Após recarga, o cliente não consegue rever o pedido com segurança |
 | Pagamento e recebimento completos ausentes | O fluxo operacional atual não possui ciclo financeiro, modalidade, endereço, taxa, envio ou rastreio |
 | Sem teste com PostgreSQL real | Atomicidade, locks e concorrência não são validados no banco real |
 | Cálculo intermediário em ponto flutuante | Possibilidade de divergência monetária em evoluções futuras |
@@ -159,7 +165,7 @@ Prioridades são recomendações técnicas, não autorização para implementar 
 Estas são propostas técnicas e dependem de priorização:
 
 1. Adicionar testes isolados com PostgreSQL real para pedido, estoque, cancelamento e concorrência.
-2. Projetar idempotência do checkout com chave e constraint única.
+2. Idempotência do checkout com chave e constraint única: implementada após a fotografia; manter testes de regressão.
 3. Substituir confirmação por consulta segura com identificador não enumerável.
 4. Corrigir cálculo monetário intermediário para Decimal ou centavos inteiros.
 5. Projetar expiração/liberação de pedidos pendentes após aprovação do prazo e das exceções.

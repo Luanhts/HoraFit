@@ -1,0 +1,13 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".postgres-spec.ts$",
+  "testTimeout": 30000,
+  "moduleNameMapper": {
+    "^prisma/(.*)$": "<rootDir>/../prisma/$1"
+  },
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}

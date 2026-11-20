@@ -1,19 +1,43 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/features/cart/cart-context';
 import { formatCurrency, getCartTotal } from '@/features/cart/cart-utils';
+import { getCreatedOrderId } from '@/lib/created-order';
 
-function CheckoutContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get('pedido');
+const pendingAttemptStorageKey = 'horafit_checkout_attempt_v1';
+
+type PendingAttempt = { payloadHash: string; key: string };
+
+function readPendingAttempt(): PendingAttempt | null {
+  try {
+    const raw = sessionStorage.getItem(pendingAttemptStorageKey);
+    if (!raw) return null;
+    const value: unknown = JSON.parse(raw);
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'payloadHash' in value &&
+      typeof value.payloadHash === 'string' &&
+      /^[0-9a-f]{64}$/.test(value.payloadHash) &&
+      'key' in value &&
+      typeof value.key === 'string' &&
+      /^[0-9a-f-]{36}$/.test(value.key)
+    ) {
+      return { payloadHash: value.payloadHash, key: value.key };
+    }
+  } catch {
+    // O retry continua protegido enquanto esta página permanecer aberta.
+  }
+  return null;
+}
+
+export default function CheckoutPage() {
   const { items, clearCart } = useCart();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -21,6 +45,8 @@ function CheckoutContent() {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const pendingAttempt = useRef<PendingAttempt | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,27 +54,57 @@ function CheckoutContent() {
     setIsSubmitting(true);
 
     try {
+      const requestBody = JSON.stringify({
+        customerName,
+        customerPhone,
+        customerEmail,
+        notes,
+        items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      });
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(requestBody));
+      const payloadHash = Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, '0'),
+      ).join('');
+      let attempt = pendingAttempt.current;
+      if (!attempt || attempt.payloadHash !== payloadHash) {
+        attempt = readPendingAttempt();
+      }
+      if (!attempt || attempt.payloadHash !== payloadHash) {
+        attempt = { payloadHash, key: crypto.randomUUID() };
+        try {
+          sessionStorage.setItem(pendingAttemptStorageKey, JSON.stringify(attempt));
+        } catch {
+          // O retry na página atual ainda reutiliza a chave em memória.
+        }
+      }
+      pendingAttempt.current = attempt;
+
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName,
-          customerPhone,
-          customerEmail,
-          notes,
-          items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
-        }),
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': attempt.key },
+        body: requestBody,
       });
 
       const body = await res.json().catch(() => null);
 
-      if (!res.ok) {
-        setError(body?.message ?? 'Não foi possível finalizar o pedido.');
+      const orderId = getCreatedOrderId(res.status, body);
+      if (orderId === null) {
+        setError(
+          res.ok
+            ? 'A resposta do pedido veio incompleta. Tente novamente.'
+            : body?.message ?? 'Não foi possível finalizar o pedido.',
+        );
         return;
       }
 
+      pendingAttempt.current = null;
+      try {
+        sessionStorage.removeItem(pendingAttemptStorageKey);
+      } catch {
+        // A sessão pode não permitir armazenamento.
+      }
+      setCreatedOrderId(orderId);
       clearCart();
-      router.push(`/checkout?pedido=${body.id}`);
     } catch {
       setError('Não foi possível conectar ao servidor.');
     } finally {
@@ -56,12 +112,12 @@ function CheckoutContent() {
     }
   }
 
-  if (orderId) {
+  if (createdOrderId !== null) {
     return (
       <main className="container mx-auto max-w-3xl px-4 py-16">
         <div className="rounded-3xl border bg-white p-10 text-center shadow-sm">
           <h1 className="mb-3 text-3xl font-extrabold text-gray-950">Pedido recebido</h1>
-          <p className="mb-6 text-muted-foreground">Seu pedido #{orderId} foi registrado com sucesso.</p>
+          <p className="mb-6 text-muted-foreground">Seu pedido #{createdOrderId} foi registrado com sucesso.</p>
           <Button asChild>
             <Link href="/produtos">Continuar comprando</Link>
           </Button>
@@ -130,13 +186,5 @@ function CheckoutContent() {
         </aside>
       </div>
     </main>
-  );
-}
-
-export default function CheckoutPage() {
-  return (
-    <Suspense fallback={<main className="container mx-auto max-w-5xl px-4 py-12">Carregando checkout...</main>}>
-      <CheckoutContent />
-    </Suspense>
   );
 }

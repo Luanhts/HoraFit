@@ -32,9 +32,10 @@ Esforço relativo: **P** pequeno, **M** médio, **G** grande. Cada linha é uma 
 | ID | Prioridade | Entrega | Dependências | Critérios de aceite | Esforço |
 | --- | --- | --- | --- | --- | --- |
 | F3-00 | P0 | Cálculo monetário exato na criação de pedido **implementado nesta entrega** | Schema atual `Decimal(10,2)` | Unitário, subtotal e total calculados em Decimal; valor fora do limite rejeitado; contrato e estoque preservados | P |
-| F3-00b | P0 | Ordenar baixas de estoque por produto **implementado em seguida** | Fluxo transacional atual | Carrinhos em ordem diferente geram a mesma ordem de atualização; teste unitário cobre a sequência; teste com PostgreSQL real ainda necessário | P |
+| F3-00b | P0 | Ordenar baixas de estoque por produto **implementado** | Fluxo transacional atual | Carrinhos em ordem diferente geram a mesma ordem de atualização; teste unitário e baseline PostgreSQL cobrem a sequência | P |
+| F3-00c | P0 | Suíte isolada com PostgreSQL real **implementada** | Docker local e migrations existentes | Banco temporário, URL restrita, migrations aplicadas; criação, rollback, cancelamento e concorrência verificados | M |
 | F3-01 | P0 | Fechar decisões comerciais e executar o plano de pagamento e recebimento em incrementos | Provedor, validade PIX/reserva, cartão, taxas, áreas, prazos, reembolso, dados de endereço | PIX/cartão confirmados pelo backend; três modalidades registradas; financeiro separado de atendimento; migrations aditivas e testes isolados | G |
-| F3-02 | P0 | Idempotência, expiração e reconciliação financeira | F3-01 e política de pagamento tardio | Retry não duplica pedido/cobrança; webhook duplicado ou fora de ordem não repete efeito; divergência vira pendência tratável | G |
+| F3-02 | P0 | Idempotência de pedido **implementada**; expiração e reconciliação financeira pendentes | Idempotência de pedido independe do provedor; demais partes exigem F3-01 e política de pagamento tardio | Retry com chave não duplica pedido/baixa; depois, webhook duplicado ou fora de ordem não repete efeito e divergência vira pendência tratável | G |
 | F3-03 | P0 | Fechar checklist e manual de operação da loja | F3-01/F3-02; responsáveis e evidências de ambiente | Cada linha do checklist tem evidência, dono e data; equipe sabe tratar exceções e três modalidades | M |
 | F3-04 | P1 | Visão de pendências e histórico de eventos no painel | Estados persistidos, identidade/origem de evento e F3-03 | Operador vê status financeiro e operacional, idade/motivo da pendência e linha do tempo; permissões no backend | M |
 | F3-05 | P1 | Aviso interno de novo pedido e alertas de pedido parado/estoque baixo | F3-03; canal, destinatários e limiares aprovados | Evento idempotente, falha visível, sem PII desnecessária nem spam | M |
@@ -65,7 +66,7 @@ Definir período e fuso `America/Sao_Paulo`, denominador, fonte e exclusões ant
 
 ## Ordem de implementação
 
-1. Concluir F3-00 e F3-00b e validar as mudanças localmente.
+1. Concluir F3-00, F3-00b e F3-00c e validar as mudanças localmente.
 2. Fechar decisões comerciais ainda pendentes e implementar **uma** fatia de F3-01 por vez, conforme `COMMERCE_EVOLUTION_PLAN.md`; depois F3-02 e F3-03. Não liberar vendas reais antes do checklist.
 3. Escolher uma necessidade operacional observada entre F3-04 e F3-07 e implementá-la isoladamente, com testes e documentação.
 4. Instrumentar/validar o funil e escolher uma hipótese F3-08. Considerar F3-09 a F3-13 apenas com evidência de impacto e regras aprovadas.
@@ -84,4 +85,26 @@ Definir período e fuso `America/Sao_Paulo`, denominador, fonte e exclusões ant
 
 **Arquivos:** `backend/src/modules/orders/orders.service.ts`, `backend/src/modules/orders/orders.service.spec.ts`, `docs/DATABASE.md`, `docs/PROJECT_STATUS.md` e este roadmap. Sem migration, dependência ou mudança de contrato HTTP.
 
-**Aceite:** produtos agregados são ordenados por ID antes da primeira baixa; preço, quantidade, total e transação permanecem iguais; teste cobre carrinho em ordem inversa; build, lint e testes afetados passam. A redução de deadlocks será comprovada posteriormente em integração com PostgreSQL real.
+**Aceite:** produtos agregados são ordenados por ID antes da primeira baixa; preço, quantidade, total e transação permanecem iguais; teste cobre carrinho em ordem inversa; build, lint e testes afetados passam. A suíte PostgreSQL posterior cobre compras concorrentes em ordem inversa, sem provar ausência universal de deadlocks.
+
+## Baseline de integração executado: F3-00c
+
+**Arquivos:** `docker-compose.integration.yml`, `backend/test/run-postgres-tests.cjs`, `backend/test/jest-postgres.json`, `backend/test/orders.postgres-spec.ts`, script `test:postgres` em `backend/package.json`, `docs/DATABASE.md`, `docs/DEPLOYMENT.md`, `docs/PROJECT_STATUS.md` e este roadmap.
+
+**Aceite observado:** banco temporário e porta local aleatória; as duas migrations aplicadas; cinco testes passaram para valores/estoque, rollback, última unidade concorrente, cancelamento repetido e carrinhos inversos. O runner removeu o container. Nenhuma migration foi aplicada em banco persistente ou de produção. O provedor de pagamento segue a definir.
+
+## Incremento concluído: idempotência de criação de pedido
+
+**Escopo:** `Idempotency-Key` UUID opcional em `POST /orders`, encaminhado pelo BFF e gerado no checkout. A migration aditiva cria `IdempotencyRequest`; hashes da chave e do payload normalizado, pedido e estoque são confirmados numa transação. Retry idêntico retorna o mesmo pedido; chave usada com payload diferente retorna `409`. Clientes legados sem header conservam o comportamento anterior. A chave do checkout é mantida na aba para retry do mesmo corpo e removida após sucesso. Não há pagamento, reserva, expiração nem cobrança nesta entrega.
+
+**Arquivos:** `backend/prisma/schema.prisma`, migration `20261120000000_add_order_idempotency`, DTO, controller e service de pedidos, `backend/test/orders.postgres-spec.ts`, `backend/test/app.e2e-spec.ts`, BFF e checkout do frontend, `docs/API.md`, `docs/DATABASE.md`, `docs/BUSINESS_RULES.md`, `docs/DEPLOYMENT.md`, `docs/PROJECT_STATUS.md` e este roadmap.
+
+**Aceite observado:** nove testes PostgreSQL isolados, incluindo retry sequencial, simultâneo, chave reutilizada com outro corpo e retry após falha; 24 testes HTTP, 13 unitários, build backend/frontend e lint dos arquivos alterados passaram. A migration só foi aplicada ao banco descartável. Para uma publicação futura, aplicar migration antes de backend e frontend. Provedor de pagamento, política de expiração e regras de entrega continuam pendentes.
+
+**Próximo passo:** fechar as decisões comerciais indispensáveis de F3-01, começando pelo provedor de PIX/cartão e pelas regras de valor, prazo e endereço das três modalidades. Depois implementar uma fatia de pagamento ou recebimento por vez e validar no checklist antes de vendas reais.
+
+## Incremento independente: confirmação visual do pedido
+
+Enquanto as decisões de pagamento e recebimento dependem do cliente, o checkout deixa de confiar em `?pedido=`. A tela exibe “pedido recebido” somente após `POST /api/orders` retornar `201` e um ID inteiro positivo. Resposta incompleta preserva carrinho e chave para retry. Não há confirmação de pagamento nem consulta pública do pedido após recarga; essa consulta exigirá identificador não enumerável e prova de posse em entrega futura.
+
+**Arquivos:** checkout, validador `frontend/src/lib/created-order.ts`, teste `frontend/test/created-order.test.mjs`, `docs/API.md`, `docs/BUSINESS_RULES.md`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** URL arbitrária não exibe sucesso; ID inválido não esvazia carrinho; resposta válida exibe o número retornado; build, lint e teste focado passam.

@@ -1,7 +1,7 @@
 # Deploy e operação - A Hora Fit
 
 **Natureza:** configuração operacional verificada e procedimentos de segurança
-**Última verificação:** 15/11/2026
+**Última verificação:** 20/11/2026
 
 Este documento descreve o que está versionado. Não confirma configurações externas, credenciais ou estado de produção.
 
@@ -115,10 +115,17 @@ O frontend usa Next.js 16.4.6 com `eslint-config-next` da mesma versão. O scrip
 | Cobertura | `npm --prefix backend run test:cov` |
 | Debug de testes | `npm --prefix backend run test:debug` |
 | Testes HTTP | `npm --prefix backend run test:e2e` |
+| Testes com PostgreSQL real isolado | `npm --prefix backend run test:postgres` |
 
 O lint do backend inclui `--fix`, e `format` usa `--write`. Ambos podem alterar arquivos. Para inspeção somente leitura, invoque a instalação local das ferramentas sem opções de escrita.
 
 `db:deploy` altera schema e `db:seed` altera dados. Confirme ambiente e autorização antes de executar.
+
+### Testes de integração PostgreSQL
+
+`test:postgres` requer Docker local. O runner cria um projeto Compose com nome aleatório, senha gerada por execução, PostgreSQL 16 em armazenamento temporário e porta aleatória vinculada somente a `127.0.0.1`. Ele constrói internamente a URL do banco `horafit_integration_test`, aplica as migrations versionadas nesse banco, executa a suíte Jest dedicada e remove o projeto Compose mesmo se os testes falharem. A configuração ignora `DATABASE_URL` do ambiente do operador e a suíte recusa execução direta sem a marcação do runner e a URL local esperada. Não usa `.env`, seed, dados nem conexão de produção.
+
+Comando a partir da raiz: `npm --prefix backend run test:postgres`. A suíte aplica também `20261120000000_add_order_idempotency` e verifica retries. Migrations e regras comerciais futuras exigem novos casos antes de publicação.
 
 ## Dockerfile do backend
 
@@ -146,6 +153,8 @@ docker build --target runtime -t horafit-backend ./backend
 O target `migration` executa `prisma migrate deploy` por padrão. O runtime não aplica migration nem seed no startup.
 
 ## Processo de release do backend
+
+Para a mudança de idempotência, executar a migration aditiva como job separado **antes** de publicar o backend que usa `idempotency_requests`; depois publicar o backend e, por último, o frontend que envia `Idempotency-Key`. Confirmar backup, ambiente e autorização antes de qualquer job real. O backend anterior ignora a tabela adicional em caso de rollback de aplicação; não remover a tabela como rollback automático. Esta sequência ainda não foi executada em produção.
 
 1. Gerar e validar a migration em ambiente isolado quando houver mudança de schema.
 2. Construir a imagem de migration.

@@ -1,7 +1,9 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -11,7 +13,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { AdminApiKeyGuard } from '../../auth/admin-api-key.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { positiveIdSchema } from '../../schemas/id-schema';
-import { createOrderSchema, type CreateOrderDto } from './dto/create-order.dto';
+import {
+  createOrderSchema,
+  idempotencyKeySchema,
+  type CreateOrderDto,
+} from './dto/create-order.dto';
 import {
   updateOrderStatusSchema,
   type UpdateOrderStatusDto,
@@ -27,8 +33,13 @@ export class OrdersController {
   create(
     @Body(new ZodValidationPipe(createOrderSchema))
     createOrderDto: CreateOrderDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    return this.ordersService.create(createOrderDto);
+    const parsedKey = idempotencyKeySchema.safeParse(idempotencyKey);
+    if (!parsedKey.success) {
+      throw new BadRequestException('Idempotency-Key deve ser um UUID válido.');
+    }
+    return this.ordersService.create(createOrderDto, parsedKey.data);
   }
 
   @Get()

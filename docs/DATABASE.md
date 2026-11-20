@@ -1,7 +1,7 @@
 # Banco de dados - A Hora Fit
 
 **Natureza:** estado do schema, migrations e integridade verificados
-**Última verificação:** 15/11/2026
+**Última verificação:** 20/11/2026
 
 O backend usa Prisma ORM 6.19.3 com PostgreSQL. O schema está em `backend/prisma/schema.prisma` e a conexão usa `DATABASE_URL`.
 
@@ -55,7 +55,7 @@ Limitações:
 | `updatedAt` | `DateTime` | Atualizado pelo Prisma |
 | `items` | `OrderItem[]` | 1:N |
 
-Não possui chave idempotente, token público, cliente autenticado, campos financeiros ou campos de entrega.
+O pedido pode ter um registro `IdempotencyRequest` associado. Ainda não possui token público, cliente autenticado, campos financeiros ou campos de entrega.
 
 ### `OrderItem` -> `order_items`
 
@@ -90,6 +90,7 @@ O significado e as transições estão em [BUSINESS_RULES.md](BUSINESS_RULES.md)
 - `Category 1:N Product`: produto exige categoria; categoria referenciada não pode ser removida pelo banco.
 - `Product 1:N OrderItem`: item exige produto; produto vendido não pode ser removido enquanto referenciado.
 - `Order 1:N OrderItem`: exclusão do pedido remove os itens por cascade.
+- `Order 1:0..1 IdempotencyRequest`: pedido com chave não pode ser removido enquanto houver registro idempotente.
 
 Não existe endpoint de exclusão de pedido. O endpoint de produto executa exclusão física e pode encontrar conflito de FK não traduzido.
 
@@ -139,23 +140,28 @@ Cria:
 - FK de item para pedido com cascade;
 - FK de item para produto com deleção restrita.
 
-O schema atual é compatível com essas duas migrations. Nunca edite migrations já aplicadas.
+### `20261120000000_add_order_idempotency`
+
+Adiciona enum `IdempotencyStatus` e tabela `idempotency_requests` com unicidade de `(scope, keyHash)` e `orderId`, FK opcional para `orders` com exclusão restrita. Guarda somente hashes SHA-256 da chave e do payload canônico, status interno, HTTP 201 e timestamps. Não modifica pedidos existentes. A chave e o pedido são gravados na mesma transação; falhas revertem ambos.
+
+O schema atual é compatível com as três migrations. Nunca edite migrations já aplicadas.
 
 ## Transação de criação do pedido
 
 `backend/src/modules/orders/orders.service.ts` executa o fluxo dentro de `$transaction`:
 
 1. Agrega quantidades por produto.
-2. Busca todos os produtos.
-3. Valida existência, atividade e estoque observado.
-4. Calcula preços com dados do banco.
-5. Executa `updateMany` por produto com `active: true` e `stock >= quantity`.
-6. Decrementa o estoque atomicamente.
-7. Cria pedido e itens.
+2. Com chave opcional, insere o registro idempotente como primeira escrita da transação.
+3. Busca todos os produtos.
+4. Valida existência, atividade e estoque observado.
+5. Calcula preços com dados do banco.
+6. Executa `updateMany` por produto com `active: true` e `stock >= quantity`.
+7. Decrementa o estoque atomicamente.
+8. Cria pedido e itens; associa o registro idempotente antes do commit.
 
 Se qualquer etapa falhar, a transação é revertida. A condição de atualização impede saldo negativo pelo fluxo da API sob concorrência.
 
-Na criação, os itens agregados são ordenados por `productId` antes das baixas condicionais. Requisições com carrinhos em ordens diferentes adquirem locks dos produtos na mesma sequência, reduzindo o risco de deadlock. Ainda não há retry explícito de deadlock nem teste de concorrência contra PostgreSQL real.
+Na criação, os itens agregados são ordenados por `productId` antes das baixas condicionais. Requisições com carrinhos em ordens diferentes adquirem locks dos produtos na mesma sequência, reduzindo o risco de deadlock. O teste PostgreSQL cobre concorrência pontual; ainda não há retry explícito de deadlock.
 
 ## Transação de status e cancelamento
 
@@ -165,14 +171,14 @@ Na criação, os itens agregados são ordenados por `productId` antes das baixas
 - Pedido já cancelado não repõe novamente.
 - Falha de reposição reverte status e estoque.
 
-Os testes atuais simulam esse comportamento com Prisma mockado; não há validação automatizada contra PostgreSQL real.
+Os testes unitários e HTTP simulam o Prisma. A suíte isolada `npm --prefix backend run test:postgres` aplica as três migrations em um PostgreSQL 16 temporário e verifica criação, rollback, cancelamento, concorrência e idempotência. Ela não substitui testes de carga nem prova ausência de todo deadlock possível.
 
 ## Representação monetária
 
 - Banco: `Decimal(10,2)` para preço, subtotal e total.
-- Service atual: converte Decimal para `number`, multiplica e arredonda antes da persistência.
+- Service atual: usa Decimal em subtotal e total, com limite explícito de `Decimal(10,2)`.
 
-O cálculo intermediário em ponto flutuante é uma limitação conhecida. Código novo não deve ampliar essa abordagem; consulte [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Não há conversão intermediária de valores monetários para ponto flutuante na criação de pedido.
 
 ## PrismaService
 
@@ -207,7 +213,7 @@ Toda mudança de schema deve incluir:
 
 - Regras comerciais sem `CHECK` no banco.
 - Poucos índices para crescimento de volume.
-- Ausência de idempotência.
+- Clientes legados sem `Idempotency-Key` permanecem sem proteção contra retry duplicado.
 - Ausência de pagamento, entrega, histórico de status e movimentação de estoque.
 - Metadados do produto em pedidos são consultados do produto atual; somente valores financeiros ficam congelados no item.
-- Não há testes de migration, rollback, locks ou concorrência contra PostgreSQL real.
+- A suíte PostgreSQL cobre as migrations existentes e um baseline de rollback, cancelamento e concorrência; ainda faltam cenários de carga, falhas de infraestrutura e migrations comerciais futuras.

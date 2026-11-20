@@ -4,9 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { createHash } from 'node:crypto';
+import { IdempotencyStatus, OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import type { CreateOrderDto } from './dto/create-order.dto';
+
+const orderInclude = {
+  items: { include: { product: { include: { category: true } } } },
+} as const;
+
+const orderCreateScope = 'ORDER_CREATE';
 
 @Injectable()
 export class OrdersService {
@@ -14,7 +21,7 @@ export class OrdersService {
 
   private readonly maxMoney = new Prisma.Decimal('99999999.99');
 
-  async create(createOrderDto: CreateOrderDto) {
+  async create(createOrderDto: CreateOrderDto, idempotencyKey?: string) {
     const customerName = createOrderDto.customerName?.trim();
     const customerPhone = createOrderDto.customerPhone?.trim();
 
@@ -61,95 +68,183 @@ export class OrdersService {
       .map(([productId, quantity]) => ({ productId, quantity }))
       .sort((left, right) => left.productId - right.productId);
 
-    return this.prisma.$transaction(async (tx) => {
-      const products = await tx.product.findMany({
-        where: { id: { in: normalizedItems.map((item) => item.productId) } },
-      });
+    const customerEmail = createOrderDto.customerEmail?.trim() || null;
+    const notes = createOrderDto.notes?.trim() || null;
+    const idempotency = idempotencyKey
+      ? {
+          scope: orderCreateScope,
+          keyHash: createHash('sha256').update(idempotencyKey).digest('hex'),
+          payloadHash: createHash('sha256')
+            .update(
+              JSON.stringify({
+                customerName,
+                customerPhone,
+                customerEmail,
+                notes,
+                items: normalizedItems,
+              }),
+            )
+            .digest('hex'),
+        }
+      : null;
 
-      if (products.length !== normalizedItems.length) {
-        throw new BadRequestException(
-          'Um ou mais produtos não foram encontrados.',
+    return this.prisma
+      .$transaction(async (tx) => {
+        if (idempotency) {
+          await tx.idempotencyRequest.create({ data: idempotency });
+        }
+
+        const products = await tx.product.findMany({
+          where: { id: { in: normalizedItems.map((item) => item.productId) } },
+        });
+
+        if (products.length !== normalizedItems.length) {
+          throw new BadRequestException(
+            'Um ou mais produtos não foram encontrados.',
+          );
+        }
+
+        const productsById = new Map(
+          products.map((product) => [product.id, product]),
         );
-      }
+        let total = new Prisma.Decimal(0);
 
-      const productsById = new Map(
-        products.map((product) => [product.id, product]),
-      );
-      let total = new Prisma.Decimal(0);
+        const orderItems: Array<{
+          productId: number;
+          quantity: number;
+          unitPrice: Prisma.Decimal;
+          subtotal: Prisma.Decimal;
+        }> = [];
 
-      const orderItems: Array<{
-        productId: number;
-        quantity: number;
-        unitPrice: Prisma.Decimal;
-        subtotal: Prisma.Decimal;
-      }> = [];
+        for (const item of normalizedItems) {
+          const product = productsById.get(item.productId);
 
-      for (const item of normalizedItems) {
-        const product = productsById.get(item.productId);
+          if (!product || !product.active) {
+            throw new BadRequestException(
+              `Produto #${item.productId} indisponível.`,
+            );
+          }
 
-        if (!product || !product.active) {
-          throw new BadRequestException(
-            `Produto #${item.productId} indisponível.`,
-          );
+          if (product.stock < item.quantity) {
+            throw new BadRequestException(
+              `Estoque insuficiente para ${product.name}.`,
+            );
+          }
+
+          const unitPrice = new Prisma.Decimal(product.price);
+          const subtotal = unitPrice.mul(item.quantity);
+          total = total.add(subtotal);
+
+          if (subtotal.gt(this.maxMoney) || total.gt(this.maxMoney)) {
+            throw new BadRequestException(
+              'Valor do pedido excede o limite permitido.',
+            );
+          }
+
+          const stockUpdate = await tx.product.updateMany({
+            where: {
+              id: product.id,
+              active: true,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+
+          if (stockUpdate.count !== 1) {
+            throw new BadRequestException(
+              `Estoque insuficiente para ${product.name}.`,
+            );
+          }
+
+          orderItems.push({
+            productId: product.id,
+            quantity: item.quantity,
+            unitPrice,
+            subtotal,
+          });
         }
 
-        if (product.stock < item.quantity) {
-          throw new BadRequestException(
-            `Estoque insuficiente para ${product.name}.`,
-          );
+        const order = await tx.order.create({
+          data: {
+            customerName,
+            customerPhone,
+            customerEmail,
+            notes,
+            total,
+            items: {
+              create: orderItems,
+            },
+          },
+          include: orderInclude,
+        });
+
+        if (idempotency) {
+          await tx.idempotencyRequest.update({
+            where: {
+              scope_keyHash: {
+                scope: idempotency.scope,
+                keyHash: idempotency.keyHash,
+              },
+            },
+            data: {
+              status: IdempotencyStatus.COMPLETED,
+              orderId: order.id,
+              completedAt: new Date(),
+            },
+          });
         }
 
-        const unitPrice = new Prisma.Decimal(product.price);
-        const subtotal = unitPrice.mul(item.quantity);
-        total = total.add(subtotal);
-
-        if (subtotal.gt(this.maxMoney) || total.gt(this.maxMoney)) {
-          throw new BadRequestException(
-            'Valor do pedido excede o limite permitido.',
-          );
+        return order;
+      })
+      .catch(async (error: unknown) => {
+        if (
+          !idempotency ||
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== 'P2002'
+        ) {
+          throw error;
         }
 
-        const stockUpdate = await tx.product.updateMany({
+        const existing = await this.prisma.idempotencyRequest.findUnique({
           where: {
-            id: product.id,
-            active: true,
-            stock: { gte: item.quantity },
+            scope_keyHash: {
+              scope: idempotency.scope,
+              keyHash: idempotency.keyHash,
+            },
           },
-          data: { stock: { decrement: item.quantity } },
         });
 
-        if (stockUpdate.count !== 1) {
-          throw new BadRequestException(
-            `Estoque insuficiente para ${product.name}.`,
+        if (!existing) {
+          throw new ConflictException(
+            'Pedido em processamento. Tente novamente.',
+          );
+        }
+        if (existing.payloadHash !== idempotency.payloadHash) {
+          throw new ConflictException(
+            'Chave de idempotência já usada com dados diferentes.',
+          );
+        }
+        if (
+          existing.status !== IdempotencyStatus.COMPLETED ||
+          !existing.orderId
+        ) {
+          throw new ConflictException(
+            'Pedido em processamento. Tente novamente.',
           );
         }
 
-        orderItems.push({
-          productId: product.id,
-          quantity: item.quantity,
-          unitPrice,
-          subtotal,
+        const order = await this.prisma.order.findUnique({
+          where: { id: existing.orderId },
+          include: orderInclude,
         });
-      }
+        if (!order) {
+          throw new ConflictException(
+            'Pedido anterior indisponível. Contate a loja.',
+          );
+        }
 
-      return tx.order.create({
-        data: {
-          customerName,
-          customerPhone,
-          customerEmail: createOrderDto.customerEmail?.trim() || null,
-          notes: createOrderDto.notes?.trim() || null,
-          total,
-          items: {
-            create: orderItems,
-          },
-        },
-        include: {
-          items: {
-            include: { product: { include: { category: true } } },
-          },
-        },
+        return order;
       });
-    });
   }
 
   findAll() {

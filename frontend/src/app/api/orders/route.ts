@@ -12,9 +12,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': request.headers.get('content-type') ?? 'application/json',
+    };
+    const idempotencyKey = request.headers.get('idempotency-key');
+    if (idempotencyKey !== null) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+
     const response = await fetch(`${apiUrl}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': request.headers.get('content-type') ?? 'application/json' },
+      headers,
       body: await request.text(),
       cache: 'no-store',
     });

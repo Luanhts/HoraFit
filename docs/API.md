@@ -51,7 +51,7 @@ Códigos relevantes usados pelo contrato atual:
 | `400` | ID, body, transição, produto ou estoque inválido |
 | `401` | Chave administrativa ausente, inválida ou não configurada |
 | `404` | Produto ou pedido não encontrado |
-| `409` | Conflito concorrente ao atualizar status |
+| `409` | Conflito concorrente ao atualizar status ou reutilização inválida da chave idempotente |
 | `429` | Limite de criação de pedidos excedido |
 | `500` | Erro interno ou configuração ausente no BFF |
 | `502` | Backend indisponível para um Route Handler administrativo |
@@ -148,6 +148,7 @@ Não há endpoints de edição ou exclusão de categoria.
 - Acesso: público.
 - Proteção: rate limit pelo tracker observado no backend, em memória e por instância.
 - Cria pedido, itens e baixa estoque na mesma transação.
+- Header opcional `Idempotency-Key`: UUID gerado pelo cliente para cada tentativa de criação.
 
 Body:
 
@@ -170,7 +171,7 @@ Comportamento comercial:
 5. Baixa estoque com condição de saldo suficiente.
 6. Calcula total e cria pedido/itens.
 
-O endpoint não aceita preço, total ou status enviados pelo cliente. Não existe chave de idempotência; repetir uma tentativa pode criar outro pedido.
+O endpoint não aceita preço, total ou status enviados pelo cliente. Com o mesmo `Idempotency-Key` e payload normalizado, o retry retorna `201` e o mesmo ID de pedido, sem nova baixa de estoque. Reutilizar a chave com dados diferentes retorna `409`; chave malformada retorna `400`. Sem o header, o contrato legado permanece e requisições repetidas podem criar pedidos distintos. O registro guarda hashes da chave e do payload, sem copiar os dados de contato. A resposta de retry reflete o estado atual do pedido, que pode ter mudado após a criação.
 
 O backend calcula preço unitário, subtotal e total com Decimal. Se o subtotal de um item ou o total do pedido exceder o limite de `Decimal(10,2)`, retorna `400` antes de criar o pedido; a transação reverte qualquer baixa de estoque anterior na mesma tentativa.
 
@@ -225,7 +226,9 @@ Base interna do Next.js:
 | `GET /api/admin/orders` | Cookie | Encaminha listagem de pedidos |
 | `PATCH /api/admin/orders/:id/status` | Cookie | Encaminha alteração de status |
 
-O handler público de pedidos encaminha o body bruto ao backend; a validação comercial efetiva acontece no NestJS.
+O handler público de pedidos encaminha o body bruto e somente o header `Idempotency-Key` ao backend; a validação comercial efetiva acontece no NestJS. O checkout gera um UUID, reutiliza a chave em retries do mesmo payload na aba e a apaga após resposta de sucesso.
+
+A confirmação visual no checkout exige resposta `201` com ID inteiro positivo do backend. O parâmetro `?pedido=` não aciona mais uma confirmação. Resposta de sucesso incompleta mantém carrinho e chave idempotente para retry; recarregar a página descarta a confirmação visual, pois ainda não há consulta pública segura do pedido.
 
 ## Contratos ausentes
 

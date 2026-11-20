@@ -54,8 +54,25 @@ model Order {
   updatedAt     DateTime    @updatedAt
 
   items         OrderItem[]
+  idempotencyRequest IdempotencyRequest?
 
   @@map("orders")
+}
+
+model IdempotencyRequest {
+  id          Int               @id @default(autoincrement())
+  scope       String            @db.VarChar(40)
+  keyHash     String            @db.Char(64)
+  payloadHash String            @db.Char(64)
+  status      IdempotencyStatus @default(PROCESSING)
+  httpStatus  Int               @default(201)
+  orderId     Int?              @unique
+  order       Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+
+  @@unique([scope, keyHash])
+  @@map("idempotency_requests")
 }
 
 model OrderItem {
@@ -79,4 +96,9 @@ enum OrderStatus {
   READY
   DELIVERED
   CANCELED
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
 }

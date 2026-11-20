@@ -60,8 +60,8 @@ Este documento é a fonte de verdade para invariantes comerciais. Detalhes de im
 
 - O backend ignora preços do navegador, busca o preço do produto e grava `unitPrice`, `subtotal` e `total`.
 - O armazenamento e o cálculo intermediário de `unitPrice`, `subtotal` e `total` usam Decimal. Pedidos cujo subtotal ou total exceda `Decimal(10,2)` são rejeitados antes da criação.
-- A criação não possui chave de idempotência.
-- A confirmação atual em `/checkout?pedido=...` confia na query string e não consulta o pedido.
+- O checkout envia chave idempotente por tentativa; o backend persiste o resultado na mesma transação do pedido. Clientes legados sem header ainda não têm essa proteção.
+- A tela de confirmação aparece somente após `POST /api/orders` retornar `201` com ID válido. Isso confirma o registro do pedido, não um pagamento. Ainda não existe consulta pública para rever a confirmação depois de recarregar a página.
 
 ## Pagamento e recebimento
 

@@ -41,4 +41,6 @@ export const createOrderSchema = z
   })
   .strict();
 
+export const idempotencyKeySchema = z.uuid().optional();
+
 export type CreateOrderDto = z.infer<typeof createOrderSchema>;

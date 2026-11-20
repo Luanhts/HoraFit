@@ -124,6 +124,20 @@ describe('AppController (e2e)', () => {
       .expect(400);
   });
 
+  it('/orders (POST) rejects an invalid idempotency key', async () => {
+    await request(app.getHttpServer())
+      .post('/orders')
+      .set('Idempotency-Key', 'invalid')
+      .send({
+        customerName: 'Cliente Teste',
+        customerPhone: '11999999999',
+        items: [{ productId: 1, quantity: 1 }],
+      })
+      .expect(400);
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   it('/orders (POST) rejects unknown fields before accessing the database', async () => {
     await request(app.getHttpServer())
       .post('/orders')
