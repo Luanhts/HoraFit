@@ -1,31 +1,19 @@
 import { getAdminApiKey } from '@/lib/admin-api';
+import { fetchAdminOrders } from '@/lib/admin-orders';
 import { getApiUrl } from '@/lib/api';
-import { Order } from '@/types/order';
+import type { Order } from '@/types/order';
 import PedidosClient from './PedidosClient';
 
 export const dynamic = 'force-dynamic';
 
-async function getOrders(): Promise<Order[]> {
-  try {
-    const res = await fetch(`${getApiUrl()}/orders`, {
-      cache: 'no-store',
-      headers: { 'x-admin-api-key': getAdminApiKey() },
-    });
-
-    if (!res.ok) {
-      console.error(`Falha ao buscar pedidos admin: GET /orders retornou ${res.status}.`);
-      return [];
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Falha ao conectar com a API para buscar pedidos admin:', error);
-    return [];
-  }
-}
-
 export default async function AdminPedidosPage() {
-  const orders = await getOrders();
+  let orders: Order[] | null = null;
+
+  try {
+    orders = await fetchAdminOrders(getApiUrl(), getAdminApiKey());
+  } catch (error) {
+    console.error('Falha ao buscar pedidos admin:', error);
+  }
 
   return (
     <div className="space-y-6">
@@ -35,7 +23,13 @@ export default async function AdminPedidosPage() {
       </div>
 
       <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <PedidosClient initialOrders={orders} />
+        {orders === null ? (
+          <p role="alert" className="text-sm text-destructive">
+            Não foi possível carregar os pedidos. Recarregue a página para tentar novamente.
+          </p>
+        ) : (
+          <PedidosClient initialOrders={orders} />
+        )}
       </div>
     </div>
   );

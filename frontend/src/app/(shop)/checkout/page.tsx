@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/features/cart/cart-context';
 import { formatCurrency, getCartTotal } from '@/features/cart/cart-utils';
+import { getCheckoutErrorMessages } from '@/lib/checkout-error';
 import { getCreatedOrderId } from '@/lib/created-order';
 
 const pendingAttemptStorageKey = 'horafit_checkout_attempt_v1';
@@ -43,14 +44,14 @@ export default function CheckoutPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [notes, setNotes] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
   const pendingAttempt = useRef<PendingAttempt | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    setErrors([]);
     setIsSubmitting(true);
 
     try {
@@ -89,10 +90,10 @@ export default function CheckoutPage() {
 
       const orderId = getCreatedOrderId(res.status, body);
       if (orderId === null) {
-        setError(
+        setErrors(
           res.ok
-            ? 'A resposta do pedido veio incompleta. Tente novamente.'
-            : body?.message ?? 'Não foi possível finalizar o pedido.',
+            ? ['A resposta do pedido veio incompleta. Tente novamente.']
+            : getCheckoutErrorMessages(body),
         );
         return;
       }
@@ -106,7 +107,7 @@ export default function CheckoutPage() {
       setCreatedOrderId(orderId);
       clearCart();
     } catch {
-      setError('Não foi possível conectar ao servidor.');
+      setErrors(['Não foi possível conectar ao servidor.']);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +163,13 @@ export default function CheckoutPage() {
             <Textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
 
-          {error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+          {errors.length > 0 && (
+            <div role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+              <ul className="list-inside list-disc">
+                {errors.map((message, index) => <li key={`${index}-${message}`}>{message}</li>)}
+              </ul>
+            </div>
+          )}
 
           <Button disabled={isSubmitting} className="w-full rounded-xl py-6 text-base">
             {isSubmitting ? 'Enviando...' : 'Enviar pedido'}

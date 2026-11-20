@@ -108,3 +108,23 @@ Definir período e fuso `America/Sao_Paulo`, denominador, fonte e exclusões ant
 Enquanto as decisões de pagamento e recebimento dependem do cliente, o checkout deixa de confiar em `?pedido=`. A tela exibe “pedido recebido” somente após `POST /api/orders` retornar `201` e um ID inteiro positivo. Resposta incompleta preserva carrinho e chave para retry. Não há confirmação de pagamento nem consulta pública do pedido após recarga; essa consulta exigirá identificador não enumerável e prova de posse em entrega futura.
 
 **Arquivos:** checkout, validador `frontend/src/lib/created-order.ts`, teste `frontend/test/created-order.test.mjs`, `docs/API.md`, `docs/BUSINESS_RULES.md`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** URL arbitrária não exibe sucesso; ID inválido não esvazia carrinho; resposta válida exibe o número retornado; build, lint e teste focado passam.
+
+## Incremento independente: feedback de erros no checkout
+
+O checkout passa a apresentar as mensagens de validação de campo devolvidas pelo backend, até cinco por tentativa, e mantém mensagens de negócio e indisponibilidade. Resposta inesperada recebe texto genérico. O alerta é anunciado por tecnologia assistiva; falhas preservam carrinho e chave de retry. A mudança não altera o contrato HTTP, preços, estoque ou regras de pagamento.
+
+**Arquivos:** checkout, `frontend/src/lib/checkout-error.ts`, `frontend/test/checkout-error.test.mjs`, `docs/API.md`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** detalhes de validação aparecem; erros de estoque/BFF aparecem; respostas malformadas não causam erro de renderização; testes focados, lint e build passam.
+
+## Incremento independente: Dashboard operacional
+
+O `/admin` passa a mostrar pedidos pendentes, pedidos em andamento e produtos ativos/esgotados a partir das APIs existentes. Os valores são contagens operacionais, sem receita ou pagamento presumido. Falha de consulta produz erro visível; lista realmente vazia produz zero. Não há migration, endpoint novo ou dependência.
+
+**Arquivos:** `frontend/src/app/admin/page.tsx`, `frontend/src/lib/admin-summary.ts`, `frontend/test/admin-summary.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** contagens coerentes com estados e estoque, links para Pedidos/Produtos, erro distinto de vazio, build/lint e teste focado.
+
+**Sequência sugerida para as telas restantes:** corrigir falhas das listagens administrativas que hoje aparecem como listas vazias; depois melhorar a navegação móvel e ações operacionais de Pedidos/Produtos. O ícone `/perfil` aponta para rota inexistente. Ocultar o link até haver uma necessidade definida de conta de cliente ou acompanhamento seguro de pedido; não criar histórico de compras ou autenticação de cliente por suposição.
+
+## Incremento independente: erro visível na listagem de Pedidos
+
+`/admin/pedidos` agora exibe “Nenhum pedido recebido ainda” somente quando `GET /orders` retorna uma lista vazia com sucesso. Erro HTTP, falha de conexão ou resposta que não seja lista mostram aviso ao operador, sem fingir que não há pedidos. O fetch continua sem cache e usa a API key administrativa apenas no servidor.
+
+**Arquivos:** `frontend/src/app/admin/pedidos/page.tsx`, `frontend/src/lib/admin-orders.ts`, `frontend/test/admin-orders.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** vazio real, erro HTTP, formato inválido e falha de conexão têm resultados distintos; testes focados, lint e build passam. **Próximo:** aplicar a mesma distinção em Produtos, em entrega separada.

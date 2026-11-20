@@ -230,6 +230,8 @@ O handler público de pedidos encaminha o body bruto e somente o header `Idempot
 
 A confirmação visual no checkout exige resposta `201` com ID inteiro positivo do backend. O parâmetro `?pedido=` não aciona mais uma confirmação. Resposta de sucesso incompleta mantém carrinho e chave idempotente para retry; recarregar a página descarta a confirmação visual, pois ainda não há consulta pública segura do pedido.
 
+Quando `POST /api/orders` falha, o checkout mostra até cinco mensagens de validação retornadas em `errors[].message`. Para erros de negócio e indisponibilidade, mostra `message`; respostas inesperadas recebem texto genérico. Nenhum desses erros limpa o carrinho ou a chave de retry.
+
 ## Contratos ausentes
 
 Não existem endpoints para:

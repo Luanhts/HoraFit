@@ -8,6 +8,12 @@ Este documento registra o estado observado em uma data. Não é uma lista de fun
 
 ## Atualização incremental — 20/11/2026
 
+A listagem administrativa de Pedidos agora distingue resposta válida e vazia de falha HTTP, conexão ou formato inesperado. Em falha, exibe aviso e não renderiza “Nenhum pedido recebido ainda”. O ajuste mantém a autorização e o contrato atual, sem migration. A tela de Produtos ainda pode tratar falha como lista vazia.
+
+O `/admin` deixou de ser um texto provisório e agora mostra contagens operacionais de pedidos pendentes/em andamento e produtos ativos/esgotados, com links para as telas existentes. A leitura é dinâmica e falhas da API geram erro visível, sem exibir zeros fictícios. O painel não apresenta receita nem presume pagamento confirmado. A rota `/perfil` continua inexistente e a necessidade de conta de cliente segue pendente.
+
+O checkout agora apresenta mensagens específicas de validação retornadas pela API, em uma região anunciada como alerta. Erros de estoque e indisponibilidade continuam visíveis; resposta malformada usa mensagem genérica. Falhas preservam carrinho e chave idempotente. O frontend ganhou um teste focado para o tratamento desses erros, sem suíte de navegador.
+
 A confirmação do checkout agora depende de resposta `201` com ID válido da API, em memória na página. Uma URL com `?pedido=` não mostra mais sucesso. Resposta incompleta mantém carrinho e chave para retry; após recarga, a confirmação visual não é restaurada. A futura consulta pública segura do pedido ainda depende de identificador não enumerável e prova de posse.
 
 O checkout agora envia `Idempotency-Key` e reutiliza a chave em retry do mesmo payload na mesma aba. O backend persiste hash da chave, hash do payload e ID do pedido na transação de criação. Retry com a mesma chave não duplica pedido nem baixa; dados diferentes retornam `409`. A terceira migration é aditiva e passou na suíte PostgreSQL descartável (nove cenários). Clientes legados sem header continuam sujeitos a duplicação. Nenhuma migration foi aplicada em produção.
@@ -63,6 +69,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 ### Administração
 
 - Login por senha compartilhada e cookie de sessão.
+- Dashboard operacional com contagens de pedidos e produtos, sem métricas financeiras.
 - Proteção de páginas `/admin/**`.
 - API administrativa protegida por chave.
 - Criação, edição, listagem e exclusão de produtos.
@@ -126,7 +133,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 - Exclusão física de produto pode gerar conflito de FK não tratado.
 - Categorias duplicadas são permitidas.
 - Listagens não possuem paginação e pedidos retornam PII completa ao administrador.
-- Falhas administrativas podem ser exibidas como ausência de dados.
+- A tela administrativa de Produtos ainda pode exibir falhas da API como ausência de dados; Pedidos já mostra erro distinto.
 - CORS está habilitado sem allowlist explícita.
 - Next Image aceita qualquer host HTTPS.
 - A chave administrativa compartilhada não identifica o operador.
