@@ -4,13 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import type { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly maxMoney = new Prisma.Decimal('99999999.99');
 
   async create(createOrderDto: CreateOrderDto) {
     const customerName = createOrderDto.customerName?.trim();
@@ -76,13 +78,13 @@ export class OrdersService {
       const productsById = new Map(
         products.map((product) => [product.id, product]),
       );
-      let total = 0;
+      let total = new Prisma.Decimal(0);
 
       const orderItems: Array<{
         productId: number;
         quantity: number;
-        unitPrice: number;
-        subtotal: number;
+        unitPrice: Prisma.Decimal;
+        subtotal: Prisma.Decimal;
       }> = [];
 
       for (const item of normalizedItems) {
@@ -100,9 +102,15 @@ export class OrdersService {
           );
         }
 
-        const unitPrice = Number(product.price);
-        const subtotal = Number((unitPrice * item.quantity).toFixed(2));
-        total += subtotal;
+        const unitPrice = new Prisma.Decimal(product.price);
+        const subtotal = unitPrice.mul(item.quantity);
+        total = total.add(subtotal);
+
+        if (subtotal.gt(this.maxMoney) || total.gt(this.maxMoney)) {
+          throw new BadRequestException(
+            'Valor do pedido excede o limite permitido.',
+          );
+        }
 
         const stockUpdate = await tx.product.updateMany({
           where: {
@@ -133,7 +141,7 @@ export class OrdersService {
           customerPhone,
           customerEmail: createOrderDto.customerEmail?.trim() || null,
           notes: createOrderDto.notes?.trim() || null,
-          total: Number(total.toFixed(2)),
+          total,
           items: {
             create: orderItems,
           },

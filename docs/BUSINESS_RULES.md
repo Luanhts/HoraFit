@@ -1,7 +1,7 @@
 # Regras comerciais - A Hora Fit
 
 **Natureza:** regras permanentes aprovadas e comportamento comercial vigente
-**Última consolidação:** 15/11/2026
+**Última consolidação:** 20/11/2026
 
 Este documento é a fonte de verdade para invariantes comerciais. Detalhes de implementação pertencem à documentação técnica. Ausências, propostas e decisões ainda não tomadas estão em [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
@@ -59,7 +59,7 @@ Este documento é a fonte de verdade para invariantes comerciais. Detalhes de im
 ### Implementação verificada
 
 - O backend ignora preços do navegador, busca o preço do produto e grava `unitPrice`, `subtotal` e `total`.
-- O armazenamento usa `Decimal(10,2)`, mas o cálculo intermediário atual usa `number`.
+- O armazenamento e o cálculo intermediário de `unitPrice`, `subtotal` e `total` usam Decimal. Pedidos cujo subtotal ou total exceda `Decimal(10,2)` são rejeitados antes da criação.
 - A criação não possui chave de idempotência.
 - A confirmação atual em `/checkout?pedido=...` confia na query string e não consulta o pedido.
 

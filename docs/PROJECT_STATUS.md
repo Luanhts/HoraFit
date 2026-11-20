@@ -6,6 +6,12 @@
 
 Este documento registra o estado observado em uma data. Não é uma lista de funcionalidades autorizadas nem uma fonte de regras comerciais. Regras aprovadas ficam em [BUSINESS_RULES.md](BUSINESS_RULES.md).
 
+## Atualização incremental — 20/11/2026
+
+O responsável confirmou que a cópia examinada é a versão atual e que as etapas de pagamento, recebimento e Analytics provavelmente não foram implementadas. A leitura do schema, rotas e frontend sustenta a ausência dessas funcionalidades nesta versão. A prontidão para vendas com PIX/cartão e as três modalidades aprovadas permanece bloqueada; veja [ROADMAP_FASE3.md](ROADMAP_FASE3.md).
+
+O cálculo de `unitPrice`, `subtotal` e `total` em `OrdersService.create` passou a usar `Prisma.Decimal` de ponta a ponta. Subtotal ou total acima do limite de `Decimal(10,2)` retorna erro de negócio antes da criação do pedido. A fotografia e a lista de riscos abaixo permanecem como registro de 15/11/2026; o risco de cálculo intermediário em ponto flutuante está corrigido nesta cópia de trabalho, ainda não publicada.
+
 ## Resumo executivo
 
 A Hora Fit possui um MVP integrado de catálogo, carrinho local, criação de pedidos, administração de produtos e gestão operacional de pedidos. O backend valida produtos, usa preços do banco, baixa estoque transacionalmente e repõe estoque no cancelamento.

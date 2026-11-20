@@ -172,6 +172,8 @@ Comportamento comercial:
 
 O endpoint não aceita preço, total ou status enviados pelo cliente. Não existe chave de idempotência; repetir uma tentativa pode criar outro pedido.
 
+O backend calcula preço unitário, subtotal e total com Decimal. Se o subtotal de um item ou o total do pedido exceder o limite de `Decimal(10,2)`, retorna `400` antes de criar o pedido; a transação reverte qualquer baixa de estoque anterior na mesma tentativa.
+
 ### `GET /orders`
 
 - Acesso: administrativo.
