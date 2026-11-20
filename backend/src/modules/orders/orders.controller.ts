@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AdminApiKeyGuard } from '../../auth/admin-api-key.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { positiveIdSchema } from '../../schemas/id-schema';
@@ -22,6 +23,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @UseGuards(ThrottlerGuard)
   create(
     @Body(new ZodValidationPipe(createOrderSchema))
     createOrderDto: CreateOrderDto,

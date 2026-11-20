@@ -8,6 +8,8 @@ import { PrismaService } from './../prisma/prisma.service';
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
   const originalAdminApiKey = process.env.ADMIN_API_KEY;
+  const originalOrderRateLimitMax = process.env.ORDER_RATE_LIMIT_MAX;
+  const originalOrderRateLimitWindowMs = process.env.ORDER_RATE_LIMIT_WINDOW_MS;
   const productResponse = {
     id: 1,
     name: 'Produto Teste',
@@ -58,6 +60,8 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     process.env.ADMIN_API_KEY = 'test-admin-key';
+    process.env.ORDER_RATE_LIMIT_MAX = '2';
+    process.env.ORDER_RATE_LIMIT_WINDOW_MS = '60000';
     jest.clearAllMocks();
     prismaMock.$transaction.mockImplementation(
       async (callback: (tx: typeof prismaMock) => Promise<unknown>) =>
@@ -88,7 +92,9 @@ describe('AppController (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
-    process.env.ADMIN_API_KEY = originalAdminApiKey;
+    restoreEnv('ADMIN_API_KEY', originalAdminApiKey);
+    restoreEnv('ORDER_RATE_LIMIT_MAX', originalOrderRateLimitMax);
+    restoreEnv('ORDER_RATE_LIMIT_WINDOW_MS', originalOrderRateLimitWindowMs);
   });
 
   it('/ (GET)', () => {
@@ -145,6 +151,25 @@ describe('AppController (e2e)', () => {
         items: [{ productId: 1, quantity: 1 }],
       })
       .expect(400);
+  });
+
+  it('/orders (POST) rate limits repeated requests before accessing the database', async () => {
+    const invalidOrder = { items: [] };
+
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send(invalidOrder)
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send(invalidOrder)
+      .expect(400);
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send(invalidOrder)
+      .expect(429);
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 
   it('/products (POST) blocks requests without admin API key', () => {
@@ -317,3 +342,12 @@ describe('AppController (e2e)', () => {
       .expect(400);
   });
 });
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}

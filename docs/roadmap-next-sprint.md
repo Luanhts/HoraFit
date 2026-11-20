@@ -1,5 +1,7 @@
 # Roadmap do próximo sprint - Hora Fit
 
+> **Registro histórico:** este documento preserva a análise e o planejamento iniciados em 27/10/2026. As seções iniciais não representam necessariamente o estado atual: cancelamento com reposição atômica e throttling de `POST /orders` foram implementados posteriormente. Consulte [PROJECT_STATUS.md](PROJECT_STATUS.md) para o diagnóstico vigente e não reinterprete propostas deste arquivo como decisões comerciais aprovadas.
+
 **Data da análise:** 27/10/2026  
 **Fonte de verdade:** código do repositório  
 **Escopo:** frontend Next.js, backend NestJS, Prisma, PostgreSQL, rotas, componentes, testes e prontidão operacional
