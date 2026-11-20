@@ -57,12 +57,9 @@ export class OrdersService {
       );
     }
 
-    const normalizedItems = Array.from(itemsByProduct.entries()).map(
-      ([productId, quantity]) => ({
-        productId,
-        quantity,
-      }),
-    );
+    const normalizedItems = Array.from(itemsByProduct.entries())
+      .map(([productId, quantity]) => ({ productId, quantity }))
+      .sort((left, right) => left.productId - right.productId);
 
     return this.prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({

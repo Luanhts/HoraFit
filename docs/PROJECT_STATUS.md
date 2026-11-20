@@ -12,6 +12,8 @@ O responsável confirmou que a cópia examinada é a versão atual e que as etap
 
 O cálculo de `unitPrice`, `subtotal` e `total` em `OrdersService.create` passou a usar `Prisma.Decimal` de ponta a ponta. Subtotal ou total acima do limite de `Decimal(10,2)` retorna erro de negócio antes da criação do pedido. A fotografia e a lista de riscos abaixo permanecem como registro de 15/11/2026; o risco de cálculo intermediário em ponto flutuante está corrigido nesta cópia de trabalho, ainda não publicada.
 
+Os itens agregados agora são ordenados por `productId` antes das baixas de estoque. Isso padroniza a ordem de aquisição dos locks entre carrinhos equivalentes e reduz o risco de deadlock; a garantia de concorrência ainda requer teste com PostgreSQL real. A criação de pedidos continua sem idempotência e sem expiração de estoque pendente.
+
 ## Resumo executivo
 
 A Hora Fit possui um MVP integrado de catálogo, carrinho local, criação de pedidos, administração de produtos e gestão operacional de pedidos. O backend valida produtos, usa preços do banco, baixa estoque transacionalmente e repõe estoque no cancelamento.

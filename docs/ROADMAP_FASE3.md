@@ -32,6 +32,7 @@ Esforço relativo: **P** pequeno, **M** médio, **G** grande. Cada linha é uma 
 | ID | Prioridade | Entrega | Dependências | Critérios de aceite | Esforço |
 | --- | --- | --- | --- | --- | --- |
 | F3-00 | P0 | Cálculo monetário exato na criação de pedido **implementado nesta entrega** | Schema atual `Decimal(10,2)` | Unitário, subtotal e total calculados em Decimal; valor fora do limite rejeitado; contrato e estoque preservados | P |
+| F3-00b | P0 | Ordenar baixas de estoque por produto **implementado em seguida** | Fluxo transacional atual | Carrinhos em ordem diferente geram a mesma ordem de atualização; teste unitário cobre a sequência; teste com PostgreSQL real ainda necessário | P |
 | F3-01 | P0 | Fechar decisões comerciais e executar o plano de pagamento e recebimento em incrementos | Provedor, validade PIX/reserva, cartão, taxas, áreas, prazos, reembolso, dados de endereço | PIX/cartão confirmados pelo backend; três modalidades registradas; financeiro separado de atendimento; migrations aditivas e testes isolados | G |
 | F3-02 | P0 | Idempotência, expiração e reconciliação financeira | F3-01 e política de pagamento tardio | Retry não duplica pedido/cobrança; webhook duplicado ou fora de ordem não repete efeito; divergência vira pendência tratável | G |
 | F3-03 | P0 | Fechar checklist e manual de operação da loja | F3-01/F3-02; responsáveis e evidências de ambiente | Cada linha do checklist tem evidência, dono e data; equipe sabe tratar exceções e três modalidades | M |
@@ -64,7 +65,7 @@ Definir período e fuso `America/Sao_Paulo`, denominador, fonte e exclusões ant
 
 ## Ordem de implementação
 
-1. Concluir F3-00 e validar a mudança localmente.
+1. Concluir F3-00 e F3-00b e validar as mudanças localmente.
 2. Fechar decisões comerciais ainda pendentes e implementar **uma** fatia de F3-01 por vez, conforme `COMMERCE_EVOLUTION_PLAN.md`; depois F3-02 e F3-03. Não liberar vendas reais antes do checklist.
 3. Escolher uma necessidade operacional observada entre F3-04 e F3-07 e implementá-la isoladamente, com testes e documentação.
 4. Instrumentar/validar o funil e escolher uma hipótese F3-08. Considerar F3-09 a F3-13 apenas com evidência de impacto e regras aprovadas.
@@ -76,3 +77,11 @@ Definir período e fuso `America/Sao_Paulo`, denominador, fonte e exclusões ant
 **Arquivos:** `backend/src/modules/orders/orders.service.ts`, `backend/src/modules/orders/orders.service.spec.ts`, `docs/BUSINESS_RULES.md`, `docs/PROJECT_STATUS.md`, `docs/API.md` e este roadmap. Sem migration ou dependência; o contrato mantém o formato e acrescenta erro `400` para valor fora do limite do banco.
 
 **Critérios de aceite:** calcular preço, subtotal e total com `Prisma.Decimal`; rejeitar valor que excede `Decimal(10,2)` com erro de negócio; não alterar preço histórico nem a transação de estoque; teste de centavos e de limite passa. Verificar build e suíte afetada. Nenhuma chamada a provedor ou operação de produção.
+
+## Tarefa incremental seguinte: F3-00b
+
+**Motivo:** a criação usava a ordem dos itens enviados pelo navegador para as baixas de estoque. Dois carrinhos com os mesmos produtos em ordens opostas podiam adquirir locks em sequências diferentes.
+
+**Arquivos:** `backend/src/modules/orders/orders.service.ts`, `backend/src/modules/orders/orders.service.spec.ts`, `docs/DATABASE.md`, `docs/PROJECT_STATUS.md` e este roadmap. Sem migration, dependência ou mudança de contrato HTTP.
+
+**Aceite:** produtos agregados são ordenados por ID antes da primeira baixa; preço, quantidade, total e transação permanecem iguais; teste cobre carrinho em ordem inversa; build, lint e testes afetados passam. A redução de deadlocks será comprovada posteriormente em integração com PostgreSQL real.

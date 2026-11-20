@@ -64,6 +64,29 @@ describe('OrdersService', () => {
     expect(data.total.toFixed(2)).toBe('0.50');
   });
 
+  it('decrements stock in product ID order even when cart items are reversed', async () => {
+    const { prisma, tx } = createOrderPrismaMock(['10.00', '20.00']);
+    const service = new OrdersService(prisma as never);
+
+    await service.create({
+      customerName: 'Cliente',
+      customerPhone: '41999999999',
+      items: [
+        { productId: 2, quantity: 1 },
+        { productId: 1, quantity: 1 },
+      ],
+    });
+
+    expect(tx.product.updateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: 1, active: true, stock: { gte: 1 } },
+      data: { stock: { decrement: 1 } },
+    });
+    expect(tx.product.updateMany).toHaveBeenNthCalledWith(2, {
+      where: { id: 2, active: true, stock: { gte: 1 } },
+      data: { stock: { decrement: 1 } },
+    });
+  });
+
   it('rejects an order whose total exceeds Decimal(10,2)', async () => {
     const { prisma, tx } = createOrderPrismaMock([
       '50000000.00',

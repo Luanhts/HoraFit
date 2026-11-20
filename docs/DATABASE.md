@@ -155,7 +155,7 @@ O schema atual é compatível com essas duas migrations. Nunca edite migrations 
 
 Se qualquer etapa falhar, a transação é revertida. A condição de atualização impede saldo negativo pelo fluxo da API sob concorrência.
 
-Na criação, produtos seguem a ordem de primeira ocorrência no payload; requisições com ordens diferentes podem adquirir locks de forma divergente. Não existe ordenação prévia nem retry explícito de deadlock nesse fluxo.
+Na criação, os itens agregados são ordenados por `productId` antes das baixas condicionais. Requisições com carrinhos em ordens diferentes adquirem locks dos produtos na mesma sequência, reduzindo o risco de deadlock. Ainda não há retry explícito de deadlock nem teste de concorrência contra PostgreSQL real.
 
 ## Transação de status e cancelamento
 
