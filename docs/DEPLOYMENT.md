@@ -47,6 +47,8 @@ Não leia nem publique valores dos arquivos `.env` reais. Os nomes abaixo vêm d
 | `PORT` | Porta HTTP; padrão 3333 |
 | `NODE_ENV` | Ambiente do runtime |
 
+Para usar o painel administrativo, configure `ADMIN_API_KEY` com o mesmo valor secreto em `frontend/.env` e `backend/.env`. A chave fica somente no servidor; não use o prefixo `NEXT_PUBLIC_`. Se ela estiver ausente, o painel não consegue consultar pedidos. Reinicie os servidores locais após alterar esses arquivos.
+
 `PORT` é consumida pelo código, mas não está em `backend/.env.example` no estado verificado.
 
 ### PostgreSQL do Compose
@@ -116,6 +118,8 @@ O frontend usa Next.js 16.4.6 com `eslint-config-next` da mesma versão. O scrip
 | Debug de testes | `npm --prefix backend run test:debug` |
 | Testes HTTP | `npm --prefix backend run test:e2e` |
 | Testes com PostgreSQL real isolado | `npm --prefix backend run test:postgres` |
+
+O build do backend verifica se o Prisma Client corresponde ao schema e à versão instalada. Quando está antigo ou ausente, gera o client antes de compilar o NestJS; quando já está atualizado, evita regravar o engine, que pode estar aberto pelo backend local no Windows. Se uma mudança de schema exigir geração enquanto o engine está em uso, encerre o processo local do backend, rode o build e depois reinicie o serviço. A geração não aplica migrations nem altera dados; a migration permanece um job separado. O Dockerfile também gera o client explicitamente no estágio de build.
 
 O lint do backend inclui `--fix`, e `format` usa `--write`. Ambos podem alterar arquivos. Para inspeção somente leitura, invoque a instalação local das ferramentas sem opções de escrita.
 

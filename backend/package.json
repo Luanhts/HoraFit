@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "packageManager": "npm@11.9.0",
   "scripts": {
-    "build": "nest build",
+    "build": "node scripts/ensure-prisma-client.cjs && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
