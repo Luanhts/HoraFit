@@ -1,45 +1,27 @@
-import { getApiUrl } from "@/lib/api";
-import { Category, Produto } from "@/types/produto";
-import ProdutosClient from "./ProdutosClient";
+import { getApiUrl } from '@/lib/api';
+import { fetchAdminProducts } from '@/lib/admin-products';
+import ProdutosClient from './ProdutosClient';
 
-export const dynamic = "force-dynamic";
-
-// Ambas as funções rodam no servidor (Server Component).
-// As requisições são paralelas com Promise.all para reduzir o tempo de carregamento.
-
-async function getProdutos(): Promise<Produto[]> {
-  try {
-    const res = await fetch(`${getApiUrl()}/products`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Erro ao buscar produtos");
-    return res.json();
-  } catch (error) {
-    console.error("Erro ao buscar produtos:", error);
-    return [];
-  }
-}
-
-async function getCategories(): Promise<Category[]> {
-  try {
-    const res = await fetch(`${getApiUrl()}/categories`, {
-      // Categorias mudam raramente — pode usar cache padrão ou revalidar a cada hora
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) throw new Error("Erro ao buscar categorias");
-    return res.json();
-  } catch (error) {
-    console.error("Erro ao buscar categorias:", error);
-    return [];
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export default async function ProdutosPage() {
-  // Requisições em paralelo: não esperamos produtos para então buscar categorias
-  const [produtos, categories] = await Promise.all([
-    getProdutos(),
-    getCategories(),
-  ]);
+  let data: Awaited<ReturnType<typeof fetchAdminProducts>>;
 
-  return <ProdutosClient initialProdutos={produtos} categories={categories} />;
+  try {
+    data = await fetchAdminProducts(getApiUrl());
+  } catch {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold tracking-tight">Meus Produtos</h1>
+        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">
+          <p>Não foi possível carregar produtos e categorias. Tente novamente.</p>
+          <a href="/admin/produtos" className="mt-3 inline-block font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2">
+            Recarregar página
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return <ProdutosClient initialProdutos={data.produtos} categories={data.categories} />;
 }

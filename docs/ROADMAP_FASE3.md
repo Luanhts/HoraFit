@@ -127,4 +127,10 @@ O `/admin` passa a mostrar pedidos pendentes, pedidos em andamento e produtos at
 
 `/admin/pedidos` agora exibe “Nenhum pedido recebido ainda” somente quando `GET /orders` retorna uma lista vazia com sucesso. Erro HTTP, falha de conexão ou resposta que não seja lista mostram aviso ao operador, sem fingir que não há pedidos. O fetch continua sem cache e usa a API key administrativa apenas no servidor.
 
-**Arquivos:** `frontend/src/app/admin/pedidos/page.tsx`, `frontend/src/lib/admin-orders.ts`, `frontend/test/admin-orders.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** vazio real, erro HTTP, formato inválido e falha de conexão têm resultados distintos; testes focados, lint e build passam. **Próximo:** aplicar a mesma distinção em Produtos, em entrega separada.
+**Arquivos:** `frontend/src/app/admin/pedidos/page.tsx`, `frontend/src/lib/admin-orders.ts`, `frontend/test/admin-orders.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** vazio real, erro HTTP, formato inválido e falha de conexão têm resultados distintos; testes focados, lint e build passam.
+
+## Incremento independente: erro visível na listagem de Produtos
+
+`/admin/produtos` distingue listas válidas vazias de falhas em `GET /products` ou `GET /categories`. Em falha, o operador vê um aviso com opção de recarregar; a tabela e ações de produto não aparecem com dados incompletos. Resposta válida sem produtos mostra estado vazio, e filtros sem resultados mostram mensagem própria. O carregamento preserva as opções de cache anteriores.
+
+**Arquivos:** `frontend/src/app/admin/produtos/page.tsx`, `frontend/src/app/admin/produtos/ProdutosClient.tsx`, `frontend/src/lib/admin-products.ts`, `frontend/test/admin-products.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** sucesso, vazio real, erro HTTP de cada endpoint, formato inválido e falha de conexão são distinguidos por testes focados, lint e build.

@@ -8,7 +8,9 @@ Este documento registra o estado observado em uma data. Não é uma lista de fun
 
 ## Atualização incremental — 20/11/2026
 
-A listagem administrativa de Pedidos agora distingue resposta válida e vazia de falha HTTP, conexão ou formato inesperado. Em falha, exibe aviso e não renderiza “Nenhum pedido recebido ainda”. O ajuste mantém a autorização e o contrato atual, sem migration. A tela de Produtos ainda pode tratar falha como lista vazia.
+Em 21/11/2026, a listagem administrativa de Produtos passou a distinguir listas vazias válidas de falhas HTTP, de conexão ou de formato. Falhas de produtos ou categorias exibem aviso e opção de recarregar, sem renderizar uma tabela vazia enganosa. O catálogo vazio e os filtros sem resultados têm mensagens distintas.
+
+A listagem administrativa de Pedidos agora distingue resposta válida e vazia de falha HTTP, conexão ou formato inesperado. Em falha, exibe aviso e não renderiza “Nenhum pedido recebido ainda”. O ajuste mantém a autorização e o contrato atual, sem migration.
 
 O `/admin` deixou de ser um texto provisório e agora mostra contagens operacionais de pedidos pendentes/em andamento e produtos ativos/esgotados, com links para as telas existentes. A leitura é dinâmica e falhas da API geram erro visível, sem exibir zeros fictícios. O painel não apresenta receita nem presume pagamento confirmado. A rota `/perfil` continua inexistente e a necessidade de conta de cliente segue pendente.
 
@@ -87,7 +89,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 | Confirmação | Mostra sucesso após resposta válida da API; não permite rever a confirmação após recarga |
 | Categorias | API lista/cria; sem tela completa, edição, exclusão ou unicidade |
 | Upload | Seletor visual não envia arquivo; operação real usa URL |
-| Produtos admin | Falha da API pode aparecer como lista vazia; sem paginação |
+| Produtos admin | Falhas de carregamento são visíveis; sem paginação |
 | Pedidos admin | Sem paginação, atualização automática, histórico ou operador responsável |
 | Histórico | Valores financeiros são congelados; nome/imagem/categoria vêm do produto atual |
 | Autenticação admin | Uma senha e uma API key compartilhadas, sem usuários, papéis ou auditoria |

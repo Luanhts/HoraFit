@@ -10,6 +10,7 @@ A hora fit pg
 - [Banco de dados](docs/DATABASE.md)
 - [Deploy e operação](docs/DEPLOYMENT.md)
 - [Status atual, riscos e decisões pendentes](docs/PROJECT_STATUS.md)
+- [Roteiro de execução dos próximos passos](docs/PLANO_EXECUCAO_PROXIMOS_PASSOS.md)
 - [Plano de evolução comercial](docs/COMMERCE_EVOLUTION_PLAN.md)
 - [Roadmap histórico](docs/roadmap-next-sprint.md)
 

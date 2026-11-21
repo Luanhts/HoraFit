@@ -260,6 +260,15 @@ export default function ProdutosClient({ initialProdutos, categories }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {produtosFiltrados.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  {produtos.length === 0
+                    ? "Nenhum produto cadastrado ainda."
+                    : "Nenhum produto corresponde aos filtros."}
+                </TableCell>
+              </TableRow>
+            )}
             {produtosFiltrados.map((produto) => (
               <TableRow key={produto.id}>
                 <TableCell>
