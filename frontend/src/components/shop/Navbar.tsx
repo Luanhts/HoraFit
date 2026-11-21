@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, ShoppingCart } from "lucide-react";
+import { ShoppingCart, UserRound } from "lucide-react";
 import logo from "@/assets/HoraFitLogo.jpg";
 import Image from "next/image";
 import { useCart } from "@/features/cart/cart-context";
@@ -66,12 +66,12 @@ export default function Navbar() {
 
         {/* ÍCONES DE AÇÃO (Lado Direito) */}
         <div className="flex items-center gap-6">
-          {/* Ícone de Perfil/Usuário */}
           <Link
             href="/perfil"
+            aria-label="Meu perfil"
             className="text-gray-700 hover:text-primary transition-colors p-1"
           >
-            <User className="h-5 w-5 stroke-[2]" />
+            <UserRound className="h-5 w-5 stroke-[2]" aria-hidden="true" />
           </Link>
 
           {/* Ícone do Carrinho com Badge do Contador */}

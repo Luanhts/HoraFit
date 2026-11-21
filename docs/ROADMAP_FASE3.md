@@ -121,7 +121,7 @@ O `/admin` passa a mostrar pedidos pendentes, pedidos em andamento e produtos at
 
 **Arquivos:** `frontend/src/app/admin/page.tsx`, `frontend/src/lib/admin-summary.ts`, `frontend/test/admin-summary.test.mjs`, `docs/PROJECT_STATUS.md` e este roadmap. **Aceite:** contagens coerentes com estados e estoque, links para Pedidos/Produtos, erro distinto de vazio, build/lint e teste focado.
 
-**Sequência sugerida para as telas restantes:** corrigir falhas das listagens administrativas que hoje aparecem como listas vazias; depois melhorar a navegação móvel e ações operacionais de Pedidos/Produtos. O ícone `/perfil` aponta para rota inexistente. Ocultar o link até haver uma necessidade definida de conta de cliente ou acompanhamento seguro de pedido; não criar histórico de compras ou autenticação de cliente por suposição.
+**Sequência sugerida para as telas restantes:** as falhas das listagens administrativas já aparecem como erro visível; depois melhorar a navegação móvel e ações operacionais de Pedidos/Produtos. O link para `/perfil` foi restaurado em 21/11/2026 com uma página pública informativa. Conta de cliente e acompanhamento seguro de pedido continuam dependentes de requisito aprovado.
 
 ## Incremento independente: erro visível na listagem de Pedidos
 

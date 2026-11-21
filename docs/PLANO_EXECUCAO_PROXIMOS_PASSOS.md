@@ -31,7 +31,7 @@ Cada linha é uma entrega separada. **P/M/G** são estimativas relativas, não p
 
 | Ordem | Tarefa | Prioridade / esforço | Dependência | Aceite principal |
 | --- | --- | --- | --- | --- |
-| 1 | Corrigir a navegação pública que aponta para `/perfil` inexistente | P1 / P | Nenhuma | Nenhum link da loja leva a página inexistente; carrinho e navegação existente continuam acessíveis |
+| 1 | Restaurar o acesso a `/perfil` com página pública informativa — concluído localmente em 21/11/2026 | P1 / P | Nenhuma | Ícone leva a página existente; nenhuma conta ou histórico fictício é exibido |
 | 2 | Ajustar idioma do documento e nomes acessíveis dos controles principais | P1 / P | Nenhuma | `lang` corresponde a pt-BR; ícones de ação têm nome para leitor de tela; navegação por teclado preservada |
 | 3 | Tornar o painel administrativo utilizável em telas pequenas | P1 / M | Telas existentes | Dashboard, Produtos e Pedidos têm navegação e tabelas utilizáveis em viewport móvel, sem esconder ações críticas |
 | 4 | Tratar exclusão de produto referenciado por pedido | P1 / M | Regra existente de preservar histórico | API devolve conflito de negócio compreensível; painel orienta inativar o produto; nenhum item histórico é apagado |
@@ -39,11 +39,11 @@ Cada linha é uma entrega separada. **P/M/G** são estimativas relativas, não p
 
 As tarefas 1 a 4 não devem criar conta de cliente, fluxo de pagamento ou política de entrega. A tarefa 5 prepara a área administrativa para futuras ações financeiras; identidade individual e auditoria entram antes dessas ações, conforme o plano comercial. A orientação da [OWASP sobre autorização por função](https://api-security.owasp.org/editions/2023/en/0xa5-broken-function-level-authorization/) e [proteção de mutações autenticadas](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) serve como referência de revisão, sem substituir os contratos do projeto.
 
-### Primeira execução concreta: link de perfil
+### Primeira execução concreta: página de perfil — concluída
 
-**Escopo:** `frontend/src/components/shop/Navbar.tsx`, teste focado se houver comportamento novo, e documentação de status. O componente apresenta um link para `/perfil`, mas a rota não existe e ainda não há decisão para conta de cliente. Remover ou ocultar o acesso até existir requisito aprovado; preservar o acesso ao carrinho e os links institucionais.
+**Escopo:** `frontend/src/components/shop/Navbar.tsx`, `frontend/src/app/(shop)/perfil/page.tsx` e documentação de status. A pedido do responsável, o ícone foi restaurado e passou a apontar para uma página pública informativa. O carrinho e os demais links foram preservados. A tela não consulta nem armazena dados de cliente.
 
-**Aceite:** a navegação não oferece `/perfil`; desktop e mobile não perdem links válidos; lint e build do frontend passam. Não criar uma página de perfil vazia para satisfazer o link.
+**Aceite:** `/perfil` responde e oferece caminhos para contato e catálogo; o ícone tem nome acessível; não há conta ou histórico de compras presumidos; lint e build do frontend passam.
 
 ## Decisões a obter do cliente, sem bloqueio das tarefas acima
 
@@ -77,4 +77,4 @@ git diff --check
 
 ## Prompt de continuidade para uma próxima sessão
 
-> Atue como Engenheiro de Software Sênior e Product Engineer da HoraFit. Leia `AGENTS.md`, `docs/BUSINESS_RULES.md`, `docs/PROJECT_STATUS.md`, `docs/ROADMAP_FASE3.md` e `docs/PLANO_EXECUCAO_PROXIMOS_PASSOS.md`. Verifique `git status --short` e a implementação real. Execute somente a primeira tarefa ainda necessária da fila independente, começando pelo link `/perfil` se ele ainda apontar para rota inexistente. Defina escopo e aceite, preserve mudanças existentes, implemente uma entrega pequena, rode testes proporcionais, lint e build, e atualize a documentação. Se a tarefa depender de decisão comercial ausente, registre a pendência e avance para a próxima tarefa independente. Não presuma pagamento, logística ou Analytics implementados. Não faça commit, push, migration em banco persistente, deploy, cobranças, pedidos reais ou envio de mensagens sem autorização específica. Ao final, informe arquivos alterados, testes executados, limitações e próxima tarefa.
+> Atue como Engenheiro de Software Sênior e Product Engineer da HoraFit. Leia `AGENTS.md`, `docs/BUSINESS_RULES.md`, `docs/PROJECT_STATUS.md`, `docs/ROADMAP_FASE3.md` e `docs/PLANO_EXECUCAO_PROXIMOS_PASSOS.md`. Verifique `git status --short` e a implementação real. Execute somente a primeira tarefa ainda necessária da fila independente. Defina escopo e aceite, preserve mudanças existentes, implemente uma entrega pequena, rode testes proporcionais, lint e build, e atualize a documentação. Se a tarefa depender de decisão comercial ausente, registre a pendência e avance para a próxima tarefa independente. Não presuma pagamento, logística ou Analytics implementados. Não faça commit, push, migration em banco persistente, deploy, cobranças, pedidos reais ou envio de mensagens sem autorização específica. Ao final, informe arquivos alterados, testes executados, limitações e próxima tarefa.

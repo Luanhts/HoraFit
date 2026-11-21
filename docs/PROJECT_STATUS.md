@@ -8,11 +8,13 @@ Este documento registra o estado observado em uma data. Não é uma lista de fun
 
 ## Atualização incremental — 20/11/2026
 
+Em 21/11/2026, o link para `/perfil` foi restaurado a pedido do responsável e a rota passou a exibir uma página pública informativa. Ela direciona para contato e catálogo, sem sugerir acesso a dados pessoais ou histórico de compras. Conta de cliente e consulta segura de pedidos continuam pendentes de definição e implementação.
+
 Em 21/11/2026, a listagem administrativa de Produtos passou a distinguir listas vazias válidas de falhas HTTP, de conexão ou de formato. Falhas de produtos ou categorias exibem aviso e opção de recarregar, sem renderizar uma tabela vazia enganosa. O catálogo vazio e os filtros sem resultados têm mensagens distintas.
 
 A listagem administrativa de Pedidos agora distingue resposta válida e vazia de falha HTTP, conexão ou formato inesperado. Em falha, exibe aviso e não renderiza “Nenhum pedido recebido ainda”. O ajuste mantém a autorização e o contrato atual, sem migration.
 
-O `/admin` deixou de ser um texto provisório e agora mostra contagens operacionais de pedidos pendentes/em andamento e produtos ativos/esgotados, com links para as telas existentes. A leitura é dinâmica e falhas da API geram erro visível, sem exibir zeros fictícios. O painel não apresenta receita nem presume pagamento confirmado. A rota `/perfil` continua inexistente e a necessidade de conta de cliente segue pendente.
+O `/admin` deixou de ser um texto provisório e agora mostra contagens operacionais de pedidos pendentes/em andamento e produtos ativos/esgotados, com links para as telas existentes. A leitura é dinâmica e falhas da API geram erro visível, sem exibir zeros fictícios. O painel não apresenta receita nem presume pagamento confirmado. A necessidade de conta de cliente segue pendente.
 
 O checkout agora apresenta mensagens específicas de validação retornadas pela API, em uma região anunciada como alerta. Erros de estoque e indisponibilidade continuam visíveis; resposta malformada usa mensagem genérica. Falhas preservam carrinho e chave idempotente. O frontend ganhou um teste focado para o tratamento desses erros, sem suíte de navegador.
 
@@ -108,7 +110,7 @@ Essas decisões ainda não estão implementadas. A proposta técnica e sua ordem
 - Proteção obrigatória para clientes legados que não enviam chave idempotente.
 - Expiração de pedidos pendentes e liberação automática de estoque.
 - Confirmação pública segura e consulta do pedido pelo cliente.
-- Conta, perfil ou histórico do cliente; o link `/perfil` leva a rota inexistente.
+- Conta autenticada, dados de perfil e histórico do cliente; `/perfil` é somente uma página pública informativa.
 - Histórico de status.
 - Ledger ou auditoria de movimentação de estoque.
 - Usuários administrativos individuais e permissões granulares.

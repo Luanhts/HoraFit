@@ -84,11 +84,11 @@ Não há pacote npm, workspace ou script de orquestração na raiz. Também não
 
 | Área | Rotas |
 | --- | --- |
-| Loja | `/`, `/produtos`, `/produtos/[id]`, `/carrinho`, `/checkout`, `/sobre`, `/contato` |
+| Loja | `/`, `/produtos`, `/produtos/[id]`, `/carrinho`, `/checkout`, `/sobre`, `/contato`, `/perfil` |
 | Autenticação | `/sign-in` |
 | Administração | `/admin`, `/admin/produtos`, `/admin/pedidos` |
 
-A navbar aponta para `/perfil`, mas essa rota não existe.
+`/perfil` é uma página pública informativa. Ainda não há conta autenticada, dados pessoais ou histórico de compras nessa rota.
 
 ### Acesso à API
 
